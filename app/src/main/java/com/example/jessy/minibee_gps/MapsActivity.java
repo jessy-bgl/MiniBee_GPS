@@ -129,12 +129,12 @@ public class MapsActivity extends FragmentActivity
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     FINE_LOCATION_PERMISSION_REQUEST);
         } else {
+            //mLastLocation = LocationServices.getFusedLocationProviderClient(this).getLastLocation().getResult();
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
             LatLng myLat = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-            // Add a marker in Sydney and move the camera
-            LatLng sydney = new LatLng(-34, 151);
-            mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+            // Add a marker and move the camera
+            mMap.addMarker(new MarkerOptions().position(myLat).title("Me"));
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myLat, 16.0f));
         }
     }
