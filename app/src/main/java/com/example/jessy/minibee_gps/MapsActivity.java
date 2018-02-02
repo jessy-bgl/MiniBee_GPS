@@ -45,15 +45,23 @@ public class MapsActivity extends FragmentActivity
     private GoogleMap mMap;
     private Location mLastLocation;
 
+    /**
+     * Lors de la création de l'activité (la classe)
+     * Initialisation des parametres : view
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        /* Parte obligatoire, fournie par Google */
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        /* ------ */
 
+        // Creation de l'API client pour acceder aux services Google Play
         buildGoogleAPIClient();
     }
 
@@ -64,6 +72,10 @@ public class MapsActivity extends FragmentActivity
         buildGoogleAPIClient();
     }
 
+    /**
+     * Creation de l'API client, necessaire pour utiliser certains services
+     * Google Play, notamment la geolocalisation
+     */
     private void buildGoogleAPIClient() {
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -74,33 +86,59 @@ public class MapsActivity extends FragmentActivity
         }
     }
 
+    /**
+     * Lors de la connection au service
+     * => lancement de la fonction de geolocalisation
+     * et d'affichage de notre position
+     * @param bundle
+     */
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         findLocation();
     }
 
+    /**
+     * Demarrage
+     */
     protected void onStart() {
         mGoogleApiClient.connect();
         super.onStart();
     }
 
+    /**
+     * Deconnexion
+     */
     protected void onStop() {
         mGoogleApiClient.disconnect();
         super.onStop();
     }
 
+    /**
+     * Fonction fournie par Google
+     * Initialisation de la map lors du chargement
+     * @param googleMap
+     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
     }
 
+    /**
+     * Lorsque la connection est suspendue : affichage d'un message
+     * @param i
+     */
     @Override
     public void onConnectionSuspended(int i) {
         Toast.makeText(this, "Connection suspended", Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * En cas d'echec de connexion : nouvelle tentative de connexion
+     * @param connectionResult
+     */
     @Override
     public void onConnectionFailed(@NonNull final ConnectionResult connectionResult) {
+        // S'il est possible de se reconnecter => on reessaie
         if (connectionResult.hasResolution()) {
             try {
                 connectionResult.startResolutionForResult(this, CONNECTION_RESOLUTION_REQUEST);
@@ -108,21 +146,31 @@ public class MapsActivity extends FragmentActivity
                 // There was an error with the resolution intent. Try again.
                 mGoogleApiClient.connect();
             }
+            // Sinon => affichage de l'erreur
         } else {
             Dialog dialog = GooglePlayServicesUtil.getErrorDialog(connectionResult.getErrorCode(), this, 1);
             dialog.show();
         }
     }
 
+    /**
+     * Si la requete de connexion reussi => connexion aux services Google
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     @Override
-    protected void onActivityResult(int requestCode, int resultCode,
-                                    Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CONNECTION_RESOLUTION_REQUEST && resultCode == RESULT_OK) {
             mGoogleApiClient.connect();
         }
     }
 
+    /**
+     * Apres obtention de la permission => recuperation de notre geolocalisation
+     * & affichage de notre position (centrage camera + zoom)
+     */
     private void findLocation() {
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -135,12 +183,20 @@ public class MapsActivity extends FragmentActivity
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
             LatLng myLat = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-            // Add a marker and move the camera
+            // Ajout d'un marqueur sur notre position
             mMap.addMarker(new MarkerOptions().position(myLat).title("Me"));
+            // Affichage & positionnement de la camera + zoom (entre 2.0 et 21.0)
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myLat, 16.0f));
         }
     }
 
+    /**
+     * Si la permission est accordée => lancement de la fonction de
+     * localisation & d'affichage de la map
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
