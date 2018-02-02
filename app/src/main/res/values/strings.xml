@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">MiniBee_GPS</string>
-    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_maps">MiniBee</string>
 </resources>

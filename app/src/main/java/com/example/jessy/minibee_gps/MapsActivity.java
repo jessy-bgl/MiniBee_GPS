@@ -34,6 +34,8 @@ import android.location.Location;
 import android.support.v4.content.ContextCompat; // Pour la gestion de la permission de localisation
 import android.widget.Toast;
 
+
+
 public class MapsActivity extends FragmentActivity
         implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
