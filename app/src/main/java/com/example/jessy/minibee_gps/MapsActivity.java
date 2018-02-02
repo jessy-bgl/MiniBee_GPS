@@ -25,6 +25,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -179,14 +180,19 @@ public class MapsActivity extends FragmentActivity
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     FINE_LOCATION_PERMISSION_REQUEST);
         } else {
+            //System.out.println("Mon altitude : " + mLastLocation.getAltitude());
             //mLastLocation = LocationServices.getFusedLocationProviderClient(this).getLastLocation().getResult();
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
-            LatLng myLat = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+            LatLng myPos = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+            LatLng Paris = new LatLng(48.864716, 2.349014);
             // Ajout d'un marqueur sur notre position
-            mMap.addMarker(new MarkerOptions().position(myLat).title("Me"));
+            mMap.addMarker(new MarkerOptions().position(myPos).title("Me"));
             // Affichage & positionnement de la camera + zoom (entre 2.0 et 21.0)
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myLat, 16.0f));
+            // + tilt (inclinaison, entre 0 et 90)
+            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                    new CameraPosition(Paris, 18.0f, 90.0f, 0.0f)));
+
         }
     }
 
