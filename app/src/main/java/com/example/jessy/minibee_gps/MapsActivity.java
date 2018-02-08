@@ -25,6 +25,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -34,6 +35,8 @@ import android.content.pm.PackageManager; // Pour la gestion de la permission de
 import android.location.Location;
 import android.support.v4.content.ContextCompat; // Pour la gestion de la permission de localisation
 import android.widget.Toast;
+import android.support.design.widget.BottomNavigationView;
+import android.view.MenuItem;
 
 
 
@@ -53,7 +56,7 @@ public class MapsActivity extends FragmentActivity
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        /* Parte obligatoire, fournie par Google */
+        /* Partie obligatoire, fournie par Google pour l'affichage de la map */
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
@@ -61,6 +64,9 @@ public class MapsActivity extends FragmentActivity
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         /* ------ */
+
+        // Barre de navigation en bas de l'ecran
+        BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.toolbar);
 
         // Creation de l'API client pour acceder aux services Google Play
         buildGoogleAPIClient();
@@ -180,19 +186,24 @@ public class MapsActivity extends FragmentActivity
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     FINE_LOCATION_PERMISSION_REQUEST);
         } else {
-            //System.out.println("Mon altitude : " + mLastLocation.getAltitude());
-            //mLastLocation = LocationServices.getFusedLocationProviderClient(this).getLastLocation().getResult();
+            // Desactivation de "Indoor Levels"
+            mMap.setIndoorEnabled(false);
+            // Desactivation de "Map Toolbar" quand on clic sur un marqueur
+            mMap.getUiSettings().setMapToolbarEnabled(false);
+            // Ajout du bouton "My Location"
+            mMap.setMyLocationEnabled(true);
+            // Recuperation de notre position
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-
             LatLng myPos = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
             LatLng Paris = new LatLng(48.864716, 2.349014);
             // Ajout d'un marqueur sur notre position
-            mMap.addMarker(new MarkerOptions().position(myPos).title("Me"));
+            //mMap.addMarker(new MarkerOptions().position(myPos).title("Me"));
             // Affichage & positionnement de la camera + zoom (entre 2.0 et 21.0)
-            // + tilt (inclinaison, entre 0 et 90)
+            // + tilt (=inclinaison, entre 0 et 90)
             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                     new CameraPosition(Paris, 18.0f, 90.0f, 0.0f)));
-
+            //System.out.println("Mon altitude : " + mLastLocation.getAltitude());
+            //mLastLocation = LocationServices.getFusedLocationProviderClient(this).getLastLocation().getResult();
         }
     }
 

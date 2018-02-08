@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">MiniBee_GPS</string>
     <string name="title_activity_maps">MiniBee</string>
+    <string name="toolbar_menu">Menu</string>
+    <string name="toolbar_speed">100 km/h</string>
+    <string name="toolbar_altitude">50 m</string>
 </resources>
