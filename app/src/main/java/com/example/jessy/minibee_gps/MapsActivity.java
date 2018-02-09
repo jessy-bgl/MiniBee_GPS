@@ -8,6 +8,7 @@ import android.content.IntentSender;
 import android.location.LocationProvider;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -35,10 +36,13 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import android.content.pm.PackageManager; // Pour la gestion de la permission de localisation
 import android.location.Location;
 import android.support.v4.content.ContextCompat; // Pour la gestion de la permission de localisation
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 import android.support.design.widget.BottomNavigationView;
 import android.view.MenuItem;
-
 
 
 public class MapsActivity extends FragmentActivity
@@ -58,7 +62,7 @@ public class MapsActivity extends FragmentActivity
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        /* Partie obligatoire, fournie par Google pour l'affichage de la map */
+        /* Partie fournie par Google pour l'affichage de la map */
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
@@ -69,14 +73,39 @@ public class MapsActivity extends FragmentActivity
 
         // Barre de navigation en bas de l'ecran
         BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.toolbar);
-
+        // Gestion des evenements (lorsqu'on clic sur le bouton menu)
         bottomNavigationView.setOnNavigationItemSelectedListener(
                 new BottomNavigationView.OnNavigationItemSelectedListener() {
                     @Override
                     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                         switch (item.getItemId()) {
+                            // Afficher/Cacher le menu
                             case R.id.toolbar_menu:
+                                DrawerLayout drawer = (DrawerLayout) findViewById(R.id.container);
+                                if (drawer.isDrawerOpen(GravityCompat.START)) {
+                                    drawer.closeDrawer(GravityCompat.START);
+                                } else {
+                                    drawer.openDrawer(GravityCompat.START);
+                                }
+                                break;
+                        }
+                        return true;
+                    }
+                });
 
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(
+                new NavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.nav_camera:
+                                break;
+                            case R.id.nav_gallery:
+                                break;
+                            case R.id.nav_slideshow:
+                                break;
+                            case R.id.nav_manage:
                                 break;
                         }
                         return true;
@@ -190,6 +219,26 @@ public class MapsActivity extends FragmentActivity
     }
 
     /**
+     * Si la permission est accordée => lancement de la fonction de
+     * localisation & d'affichage de la map
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case FINE_LOCATION_PERMISSION_REQUEST: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    findLocation();
+                }
+            }
+        }
+    }
+
+    /**
      * Apres obtention de la permission => recuperation de notre geolocalisation
      * & affichage de notre position (centrage camera + zoom)
      */
@@ -246,23 +295,5 @@ public class MapsActivity extends FragmentActivity
         }
     }
 
-    /**
-     * Si la permission est accordée => lancement de la fonction de
-     * localisation & d'affichage de la map
-     * @param requestCode
-     * @param permissions
-     * @param grantResults
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case FINE_LOCATION_PERMISSION_REQUEST: {
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    findLocation();
-                }
-            }
-        }
-    }
+
 }
