@@ -93,6 +93,7 @@ public class MapsActivity extends FragmentActivity
                     }
                 });
 
+        // Gestion des clics sur les elements du menu
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(
                 new NavigationView.OnNavigationItemSelectedListener() {
