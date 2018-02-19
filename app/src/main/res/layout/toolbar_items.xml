@@ -6,7 +6,7 @@
     <item android:id="@+id/toolbar_menu"
         android:title="@string/toolbar_menu"
         android:icon="@drawable/ic_menu"
-        android:showAsAction="always"/>
+        android:showAsAction="always" />
 
     <item android:id="@+id/toolbar_speed"
         android:title="@string/toolbar_speed"

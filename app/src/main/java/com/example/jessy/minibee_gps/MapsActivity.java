@@ -16,6 +16,8 @@ import android.support.v4.content.ContextCompat; // Pour la gestion de la permis
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 import android.support.design.widget.BottomNavigationView;
 import android.view.MenuItem;
@@ -37,6 +39,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -211,6 +214,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
+        // Customise the styling of the base map using a JSON object defined
+        // in a raw resource file.
+        boolean success = googleMap.setMapStyle(
+                MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json));
+
         // Prompt the user for permission
         getLocationPermission();
 
@@ -264,7 +272,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Recuperation de la hauteur de la vue & decentrage de la camera
                 view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
                 mMap.moveCamera(CameraUpdateFactory.scrollBy(0,-(float)(view_height/(4))));
-
             }
         };
     }
@@ -326,12 +333,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             // Affichage & positionnement de la camera + zoom (entre 2.0 et 21.0)
                             // + tilt (=inclinaison, entre 0 et 90)
                             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                                    new CameraPosition(myPos, 18.0f, 90.0f, 0.0f)));
+                                    new CameraPosition(Paris, 18.0f, 90.0f, 0.0f)));
 
                             // Recuperation de la hauteur de la vue & decentrage de la camera
-                            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                                    .findFragmentById(R.id.map);
-                            view_height = mapFragment.getView().getHeight();
+                            view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
                             mMap.moveCamera(CameraUpdateFactory.scrollBy(0,-(float)(view_height/(4))));
 
                             //System.out.println("Mon altitude : " + mLastLocation.getAltitude());
