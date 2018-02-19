@@ -218,7 +218,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // in a raw resource file.
         boolean success = googleMap.setMapStyle(
                 MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json));
-
+        //met un marqueur sur paris
+        mMap = googleMap;
+        LatLng paris = new LatLng(48.864716, 2.349014);
+        googleMap.addMarker(new MarkerOptions().position(paris)
+                .title("marqueur de PARIS EST MAGIQUE"));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(paris));
         // Prompt the user for permission
         getLocationPermission();
 
