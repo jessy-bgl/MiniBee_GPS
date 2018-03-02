@@ -3,6 +3,7 @@ package com.example.jessy.minibee_gps;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Looper;
@@ -16,8 +17,6 @@ import android.support.v4.content.ContextCompat; // Pour la gestion de la permis
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 import android.support.design.widget.BottomNavigationView;
 import android.view.MenuItem;
@@ -51,6 +50,36 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.util.List;
+
+import org.w3c.dom.Comment;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Node;
+import org.w3c.dom.Element;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import com.example.jessy.minibee_gps.Itineraire;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
@@ -112,6 +141,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Stores the types of location services the client is interested in using. Used for checking
     // settings to determine if the device has optimal location settings.
     private LocationSettingsRequest mLocationSettingsRequest;
+
+
+    private static String xmlFile;
+    private DocumentBuilderFactory factory;
 
 
 
@@ -214,10 +247,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Customise the styling of the base map using a JSON object defined
-        // in a raw resource file.
-        boolean success = googleMap.setMapStyle(
-                MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json));
+        // Customise the styling of the base map using a JSON object defined in a raw resource file
+        mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json));
+
+        //met un marqueur sur paris
+        /*LatLng paris = new LatLng(48.864716, 2.349014);
+        googleMap.addMarker(new MarkerOptions().position(paris)
+                .title("marqueur de PARIS EST MAGIQUE"));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(paris));*/
 
         // Prompt the user for permission
         getLocationPermission();
@@ -272,6 +309,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Recuperation de la hauteur de la vue & decentrage de la camera
                 view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
                 mMap.moveCamera(CameraUpdateFactory.scrollBy(0,-(float)(view_height/(4))));
+
+                // Ecriture de notre position dans un fichier XML
+                try {
+                    positionInXML();
+                } catch (TransformerException e) {
+                    e.printStackTrace();
+                }
             }
         };
     }
@@ -338,6 +382,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             // Recuperation de la hauteur de la vue & decentrage de la camera
                             view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
                             mMap.moveCamera(CameraUpdateFactory.scrollBy(0,-(float)(view_height/(4))));
+
+                            // Ecriture de notre position dans un fichier XML
+                            try {
+                                positionInXML();
+                            } catch (TransformerException e) {
+                                e.printStackTrace();
+                            }
 
                             //System.out.println("Mon altitude : " + mLastLocation.getAltitude());
                             //mLastLocation = LocationServices.getFusedLocationProviderClient(this).getLastLocation().getResult();
@@ -597,5 +648,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         return true;
     }
+
+    public void positionInXML() throws TransformerException {
+        Itineraire itineraire = new Itineraire(getApplicationContext(), getFilesDir().getAbsolutePath()+"/");
+        // Ecriture de notre position dans un XML
+        try {
+            itineraire.addPosition((float) mLastLocation.getLatitude(), (float) mLastLocation.getLongitude(),0.f);
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SAXException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        //Itineraire.getItineraire();
+    }
+
 
 }
