@@ -661,6 +661,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (IOException ex) {
             Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
         }
+
         //Itineraire.getItineraire();
     }
 
