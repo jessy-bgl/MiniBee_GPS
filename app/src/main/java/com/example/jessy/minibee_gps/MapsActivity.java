@@ -247,7 +247,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-<<<<<<< HEAD
         // Customise the styling of the base map using a JSON object defined in a raw resource file
         mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json));
 
@@ -257,18 +256,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .title("marqueur de PARIS EST MAGIQUE"));
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(paris));*/
 
-=======
-        // Customise the styling of the base map using a JSON object defined
-        // in a raw resource file.
-        boolean success = googleMap.setMapStyle(
-                MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json));
-        //met un marqueur sur paris
-        mMap = googleMap;
-        LatLng paris = new LatLng(48.864716, 2.349014);
-        googleMap.addMarker(new MarkerOptions().position(paris)
-                .title("marqueur de PARIS EST MAGIQUE"));
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(paris));
->>>>>>> b05d1febd14f4267c2425d0757a395612213221b
         // Prompt the user for permission
         getLocationPermission();
 
