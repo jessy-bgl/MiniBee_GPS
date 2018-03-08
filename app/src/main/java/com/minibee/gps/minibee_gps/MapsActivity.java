@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.net.Uri;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -62,7 +63,8 @@ import org.xml.sax.SAXException;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
         GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks,
-        NavigationView.OnNavigationItemSelectedListener, BottomNavigationView.OnNavigationItemSelectedListener {
+        NavigationView.OnNavigationItemSelectedListener, BottomNavigationView.OnNavigationItemSelectedListener,
+        BarreMenuInfo.OnFragmentInteractionListener {
 
     private static final String TAG = MapsActivity.class.getSimpleName();
     // Google Map (objet)
@@ -158,8 +160,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
 
         // Bouton menu de la barre de navigation
-        BottomNavigationView bottomNavigationView = findViewById(R.id.toolbar);
-        bottomNavigationView.setOnNavigationItemSelectedListener(this);
+        /*BottomNavigationView bottomNavigationView = findViewById(R.id.toolbar);
+        bottomNavigationView.setOnNavigationItemSelectedListener(this);*/
+        ImageButton btn_menu = findViewById(R.id.toolbar_menu);
+        btn_menu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                DrawerLayout drawer = findViewById(R.id.container);
+                // Bouton menu : afficher/Cacher le menu
+                if (drawer.isDrawerOpen(GravityCompat.START)) {
+                    drawer.closeDrawer(GravityCompat.START);
+                } else {
+                    drawer.openDrawer(GravityCompat.START);
+                }
+            }
+        });
 
         // Menu
         NavigationView navigationView = findViewById(R.id.nav_view);
@@ -614,29 +629,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         DrawerLayout drawer = findViewById(R.id.container);
-        // Bouton menu : afficher/Cacher le menu
-        if (item.getItemId() == R.id.toolbar_menu)
-        {
-                if (drawer.isDrawerOpen(GravityCompat.START)) {
-                    drawer.closeDrawer(GravityCompat.START);
-                } else {
-                    drawer.openDrawer(GravityCompat.START);
-                }
-        }
         // Selection d'un element du menu
-        else {
-            switch (item.getItemId()) {
-                case R.id.nav_camera:
-                    break;
-                case R.id.nav_gallery:
-                    break;
-                case R.id.nav_slideshow:
-                    break;
-                case R.id.nav_manage:
-                    break;
-            }
-            drawer.closeDrawer(GravityCompat.START);
+        switch (item.getItemId()) {
+            case R.id.nav_camera:
+                break;
+            case R.id.nav_gallery:
+                break;
+            case R.id.nav_slideshow:
+                break;
+            case R.id.nav_manage:
+                break;
         }
+        drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
@@ -656,5 +660,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Itineraire.getItineraire();
     }
 
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
+    }
 
 }

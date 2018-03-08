@@ -21,15 +21,12 @@
             android:layout_height="match_parent"
             android:layout_above="@+id/toolbar"/>
 
-        <android.support.design.widget.BottomNavigationView
+        <fragment
             android:id="@+id/toolbar"
+            android:name="com.minibee.gps.minibee_gps.BarreMenuInfo"
             android:layout_width="match_parent"
             android:layout_height="75dp"
-            android:layout_alignParentBottom="true"
-            android:background="@color/colorPrimary"
-            app:itemIconTint="@color/white"
-            app:itemTextColor="@color/white"
-            app:menu="@layout/toolbar_items"/>
+            android:layout_alignParentBottom="true"/>
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/buttons"
