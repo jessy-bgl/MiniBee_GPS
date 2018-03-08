@@ -169,7 +169,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         ImageButton buttons = (ImageButton)findViewById(R.id.buttons);
         buttons.setOnClickListener(new View.OnClickListener()   {
             public void onClick(View v)  {
-                System.out.println("OK !!!!!!!!!!!!!!!!!!!!");
                 try {
                     Intent i = new Intent(MapsActivity.this, ButtonsInterface.class);
                     startActivity(i);

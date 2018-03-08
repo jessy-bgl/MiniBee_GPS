@@ -10,7 +10,8 @@
 
     <item android:id="@+id/toolbar_speed"
         android:title="@string/toolbar_speed"
-        android:enabled="false"/>
+
+        android:enabled="false" />
 
     <item android:id="@+id/toolbar_altitude"
         android:title="@string/toolbar_altitude"
