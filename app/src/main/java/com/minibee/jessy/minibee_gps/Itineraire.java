@@ -1,17 +1,11 @@
-package com.example.jessy.minibee_gps;
+package com.minibee.jessy.minibee_gps;
 
 
-import android.app.Application;
 import android.content.Context;
-import android.os.Environment;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 
-import static android.content.Context.MODE_PRIVATE;
-import static java.lang.System.out;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -31,11 +25,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Attr;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 
 /**

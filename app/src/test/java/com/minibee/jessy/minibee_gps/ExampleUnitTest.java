@@ -1,4 +1,4 @@
-package com.example.jessy.minibee_gps;
+package com.minibee.jessy.minibee_gps;
 
 import org.junit.Test;
 

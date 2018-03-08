@@ -1,4 +1,4 @@
-package com.example.jessy.minibee_gps;
+package com.minibee.jessy.minibee_gps;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.example.jessy.minibee_gps", appContext.getPackageName());
+        assertEquals("com.minibee.jessy.minibee_gps", appContext.getPackageName());
     }
 }
