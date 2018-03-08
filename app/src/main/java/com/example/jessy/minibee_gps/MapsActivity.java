@@ -17,6 +17,8 @@ import android.support.v4.content.ContextCompat; // Pour la gestion de la permis
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import android.support.design.widget.BottomNavigationView;
 import android.view.MenuItem;
@@ -186,6 +188,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Menu
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        // Bouton "interface boutons"
+        ImageButton buttons = (ImageButton)findViewById(R.id.buttons);
+        buttons.setOnClickListener(new View.OnClickListener()   {
+            public void onClick(View v)  {
+                System.out.println("OK !!!!!!!!!!!!!!!!!!!!");
+                try {
+                    Intent i = new Intent(MapsActivity.this, ButtonsInterface.class);
+                    startActivity(i);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         // Kick off the process of building the LocationCallback, LocationRequest, and
         // LocationSettingsRequest objects.
