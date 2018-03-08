@@ -1,4 +1,4 @@
-package com.minibee.jessy.minibee_gps;
+package com.minibee.gps.minibee_gps;
 
 
 import android.content.Context;

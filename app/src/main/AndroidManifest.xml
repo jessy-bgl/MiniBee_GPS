@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.minibee.jessy.minibee_gps">
+    package="com.minibee.gps.minibee_gps">
 
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
@@ -34,7 +34,7 @@
             android:value="AIzaSyCClg3TKdjO06Flg3lVM0KNnxIbvgJaGgw" />
 
         <activity
-            android:name="com.minibee.jessy.minibee_gps.MapsActivity"
+            android:name="com.minibee.gps.minibee_gps.MapsActivity"
             android:label="@string/title_activity_maps">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -42,7 +42,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.minibee.jessy.minibee_gps.ButtonsInterface"></activity>
+        <activity android:name="com.minibee.gps.minibee_gps.ButtonsInterface"></activity>
     </application>
 
 </manifest>
