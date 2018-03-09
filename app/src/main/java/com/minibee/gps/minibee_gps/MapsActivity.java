@@ -139,18 +139,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LocationSettingsRequest mLocationSettingsRequest;
 
     // Barre d'altitude
-    ImageView barre_altitude;
+    private ImageView barre_altitude;
     // Echelle d'altitude
-    ImageView echelle_altitude;
+    private ImageView echelle_altitude;
     private float hauteur_echelle_altitude;
 
     // Champ text vitesse
-    TextView text_vitesse;
+    private TextView text_vitesse;
     // Champ text altitude
-    TextView text_altitude;
-
-    // POUR LES TESTS
-    Button add_altitude;
+    private TextView text_altitude;
 
 
     /**
@@ -227,7 +224,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-
         // Kick off the process of building the LocationCallback, LocationRequest, and
         // LocationSettingsRequest objects.
         createLocationCallback();
@@ -242,11 +238,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         echelle_altitude = (ImageView) findViewById(R.id.echelle_altitude);
 
         // POUR LES TESTS
-        add_altitude = (Button) findViewById(R.id.add_altitude);
+        Button add_altitude = (Button) findViewById(R.id.add_altitude);
         add_altitude.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 altitude += 1;
+                updateAltitudeUI();
+            }
+        });
+        Button suppr_altitude = (Button) findViewById(R.id.suppr_altitude);
+        suppr_altitude.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                altitude -= 1;
                 updateAltitudeUI();
             }
         });
@@ -745,10 +749,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // Fonction d'ajustement de la position et de la couleur de la barre d'altitude
     public void updateAltitudeUI() {
-        text_altitude.setText((int) altitude + " m");
+        text_altitude.setText(altitude + " m");
         // Position
         float unite = hauteur_echelle_altitude / (required_altitude*2);
-        if (altitude < required_altitude * 2 - 1)
+        if ( (altitude < required_altitude * 2 - 1) && (altitude > 0))
             barre_altitude.setY(initial_altitude_bar_position_y - (altitude * unite));
         // Couleur
         float diff = abs(required_altitude - altitude);
