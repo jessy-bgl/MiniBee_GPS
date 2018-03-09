@@ -716,7 +716,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         DrawerLayout drawer = findViewById(R.id.container);
         // Selection d'un element du menu
         switch (item.getItemId()) {
-            case R.id.nav_camera:
+            case R.id.nav_search:
+                try {
+                    Intent i = new Intent(MapsActivity.this, DepartArrivee.class);
+                    startActivity(i);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 break;
             case R.id.nav_gallery:
                 break;
