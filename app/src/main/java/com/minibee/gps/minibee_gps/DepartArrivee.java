@@ -42,11 +42,6 @@ public class DepartArrivee extends Activity implements OnItemClickListener {
 
     private static final String API_KEY = "AIzaSyCClg3TKdjO06Flg3lVM0KNnxIbvgJaGgw";
 
-    public Context context;
-
-    private Geocoder geoCoder;
-    List<Address> address=null;
-    String addressEntree;
     double lat = 0,lon =0;
 
     @Override
