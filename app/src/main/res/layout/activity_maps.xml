@@ -36,11 +36,49 @@
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:layout_marginBottom="10dp"
+            android:layout_marginEnd="10dp"
             android:layout_marginRight="10dp"
             android:clickable="true"
-            app:srcCompat="@drawable/ic_buttons"
-            map:backgroundTint="@color/white"
+            android:focusable="true"
+            android:scaleType="center"
+            app:srcCompat="@mipmap/ic_buttons"
+            map:backgroundTint="@android:color/white"
             map:elevation="10dp" />
+
+        <RelativeLayout
+            android:layout_width="40dp"
+            android:layout_height="300dp"
+            android:layout_alignBottom="@+id/buttons"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginBottom="28dp"
+            android:layout_marginLeft="5dp">
+
+            <ImageView
+                android:id="@+id/echelle_altitude"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:adjustViewBounds="false"
+                android:alpha="0.8"
+                android:cropToPadding="false"
+                android:scaleType="fitXY"
+                app:srcCompat="@drawable/echelle_altitude" />
+
+            <ImageView
+                android:id="@+id/barre_altitude"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:adjustViewBounds="true"
+                android:alpha="1.0"
+                android:background="@color/white"
+                android:cropToPadding="false"
+                app:srcCompat="@drawable/barre_altitude_reelle" />
+        </RelativeLayout>
 
     </RelativeLayout>
 

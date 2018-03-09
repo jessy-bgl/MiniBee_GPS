@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -18,7 +19,10 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.support.design.widget.BottomNavigationView;
 import android.view.MenuItem;
@@ -61,6 +65,8 @@ import javax.xml.transform.TransformerException;
 
 import org.xml.sax.SAXException;
 
+import static java.lang.Math.abs;
+
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
         GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks,
@@ -76,6 +82,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int view_height;
     // Position de la camera
     private CameraPosition mCameraPosition;
+    // Altitude
+    private float altitude;
+    private float required_altitude;
+    private float initial_altitude_bar_position_y;
+    // Vitesse
+    private float vitesse;
 
     private static final int FINE_LOCATION_PERMISSION_REQUEST = 1;
     private static final int CONNECTION_RESOLUTION_REQUEST = 2;
@@ -126,6 +138,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // settings to determine if the device has optimal location settings.
     private LocationSettingsRequest mLocationSettingsRequest;
 
+    // Barre d'altitude
+    ImageView barre_altitude;
+    // Echelle d'altitude
+    ImageView echelle_altitude;
+    private float hauteur_echelle_altitude;
+
+    // Champ text vitesse
+    TextView text_vitesse;
+    // Champ text altitude
+    TextView text_altitude;
+
+    // POUR LES TESTS
+    Button add_altitude;
+
 
     /**
      * Lors de la création de l'activité (la classe)
@@ -145,6 +171,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Retrieve the content view that renders the map
         setContentView(R.layout.activity_maps);
+
+        // Set altitude
+        altitude = 0;
+        required_altitude = 50;
+        text_altitude = (TextView) findViewById(R.id.text_altitude);
+        text_altitude.setText((int) altitude + " m");
+
+        // Set speed
+        vitesse = 100;
+        text_vitesse = (TextView) findViewById(R.id.text_vitesse);
+        text_vitesse.setText((int) vitesse + " km/h");
 
         // Construct a FusedLocationProviderClient
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -190,6 +227,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
+
         // Kick off the process of building the LocationCallback, LocationRequest, and
         // LocationSettingsRequest objects.
         createLocationCallback();
@@ -198,6 +236,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Creation de l'API client pour acceder aux services Google Play
         buildGoogleAPIClient();
+
+        // Barre & echelle d'altitude
+        barre_altitude = (ImageView) findViewById(R.id.barre_altitude);
+        echelle_altitude = (ImageView) findViewById(R.id.echelle_altitude);
+
+        // POUR LES TESTS
+        add_altitude = (Button) findViewById(R.id.add_altitude);
+        add_altitude.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                altitude += 1;
+                updateAltitudeUI();
+            }
+        });
 
     }
 
@@ -250,6 +302,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
+        // Mise a jour de la barre d'altitude
+        hauteur_echelle_altitude = echelle_altitude.getHeight();
+        initial_altitude_bar_position_y = barre_altitude.getY();
+        updateAltitudeUI();
 
         // Customise the styling of the base map using a JSON object defined in a raw resource file
         mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json));
@@ -325,6 +382,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 } catch (TransformerException e) {
                     e.printStackTrace();
                 }
+
+                // Mise a jour de la vitesse
+                text_vitesse.setText((int) vitesse + " km/h");
+
+                // Mise a jour de l'altitude
+                updateAltitudeUI();
             }
         };
     }
@@ -563,7 +626,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mMap.setIndoorEnabled(false);
             // Desactivation de "Map Toolbar" quand on clic sur un marqueur
             mMap.getUiSettings().setMapToolbarEnabled(false);
-            // Cacher le bouton de localisation par defaut
+            // Desactivation du bouton de localisation par defaut
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
             // Modification du comportement du bouton de localisation : decentrage + reactivation suivi si necessaire
             mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener(){
@@ -662,6 +725,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return true;
     }
 
+    // Fonction d'ecriture de notre position dans un XML
     public void positionInXML() throws TransformerException {
         Itineraire itineraire = new Itineraire(getApplicationContext(), getFilesDir().getAbsolutePath()+"/");
         // Ecriture de notre position dans un XML
@@ -678,6 +742,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Itineraire.getItineraire();
     }
 
+
+    // Fonction d'ajustement de la position et de la couleur de la barre d'altitude
+    public void updateAltitudeUI() {
+        text_altitude.setText((int) altitude + " m");
+        // Position
+        float unite = hauteur_echelle_altitude / (required_altitude*2);
+        if (altitude < required_altitude * 2 - 1)
+            barre_altitude.setY(initial_altitude_bar_position_y - (altitude * unite));
+        // Couleur
+        float diff = abs(required_altitude - altitude);
+        if (diff > 5 && diff <= 10) barre_altitude.setBackgroundColor(Color.rgb(231,188,116));
+        else if (diff > 10) barre_altitude.setBackgroundColor(Color.RED);
+        else barre_altitude.setBackgroundColor(Color.GREEN);
+    }
 
     @Override
     public void onFragmentInteraction(Uri uri) {

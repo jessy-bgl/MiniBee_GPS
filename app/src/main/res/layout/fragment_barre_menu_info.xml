@@ -33,11 +33,11 @@
                 android:tint="@android:color/white" />
 
             <TextView
-                android:id="@+id/textView3"
+                android:id="@+id/text_vitesse"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="100 km/h"
+                android:text="0 km/h"
                 android:textAlignment="center"
                 android:textColor="@color/white"
                 android:textSize="18sp" />
@@ -56,16 +56,23 @@
                     android:src="@android:drawable/arrow_up_float" />
 
                 <TextView
-                    android:id="@+id/textView2"
+                    android:id="@+id/text_altitude"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="10dp"
                     android:gravity="start"
-                    android:text="50 m"
+                    android:text="0 m"
                     android:textAlignment="textStart"
                     android:textColor="@color/white"
                     android:textSize="18sp" />
             </LinearLayout>
+
+            <Button
+                android:id="@+id/add_altitude"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="+1 alt" />
 
         </LinearLayout>
     </LinearLayout>
