@@ -38,6 +38,7 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -105,6 +106,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Tracks the status of the location updates request.
     private Boolean mRequestingLocationUpdates;
 
+    // Boolean for automatic/manual camera movement
+    private Boolean autoCameraMove;
+
     // The desired interval for location updates. Inexact. Updates may be more or less frequent.
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 5000;
 
@@ -121,12 +125,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Stores the types of location services the client is interested in using. Used for checking
     // settings to determine if the device has optimal location settings.
     private LocationSettingsRequest mLocationSettingsRequest;
-
-
-    private static String xmlFile;
-    private DocumentBuilderFactory factory;
-
-
 
 
     /**
@@ -152,6 +150,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         mRequestingLocationUpdates = true;
+        autoCameraMove = false;
         mSettingsClient = LocationServices.getSettingsClient(this);
 
         // Build the map
@@ -160,8 +159,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
 
         // Bouton menu de la barre de navigation
-        /*BottomNavigationView bottomNavigationView = findViewById(R.id.toolbar);
-        bottomNavigationView.setOnNavigationItemSelectedListener(this);*/
         ImageButton btn_menu = findViewById(R.id.toolbar_menu);
         btn_menu.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -201,6 +198,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Creation de l'API client pour acceder aux services Google Play
         buildGoogleAPIClient();
+
     }
 
     /**
@@ -259,7 +257,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //met un marqueur sur paris
         /*LatLng paris = new LatLng(48.864716, 2.349014);
         googleMap.addMarker(new MarkerOptions().position(paris)
-                .title("marqueur de PARIS EST MAGIQUE"));
+                .title("marqueur PARIS"));
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(paris));*/
 
         // Prompt the user for permission
@@ -309,12 +307,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 // Affichage & positionnement de la camera + zoom (entre 2.0 et 21.0)
                 // + tilt (=inclinaison, entre 0 et 90)
-                mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                        new CameraPosition(myPos, 18.0f, 90.0f, 0.0f)));
+                if (mRequestingLocationUpdates == true)
+                {
+                    autoCameraMove = true;
+                    mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                            new CameraPosition(myPos, 18.0f, 90.0f, 0.0f)));
 
-                // Recuperation de la hauteur de la vue & decentrage de la camera
-                view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
-                mMap.moveCamera(CameraUpdateFactory.scrollBy(0,-(float)(view_height/(4))));
+                    // Recuperation de la hauteur de la vue & decentrage de la camera
+                    view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
+                    mMap.moveCamera(CameraUpdateFactory.scrollBy(0,-(float)(view_height/(4))));
+                    autoCameraMove = false;
+                }
 
                 // Ecriture de notre position dans un fichier XML
                 try {
@@ -560,7 +563,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mMap.setIndoorEnabled(false);
             // Desactivation de "Map Toolbar" quand on clic sur un marqueur
             mMap.getUiSettings().setMapToolbarEnabled(false);
-            // Modification du comportement du bouton de localisation : decentrage
+            // Cacher le bouton de localisation par defaut
+            mMap.getUiSettings().setMyLocationButtonEnabled(false);
+            // Modification du comportement du bouton de localisation : decentrage + reactivation suivi si necessaire
             mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener(){
                 @Override
                 public boolean onMyLocationButtonClick()
@@ -571,17 +576,30 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                             new CameraPosition(myPos, 18.0f, 90.0f, 0.0f)));
                     mMap.moveCamera(CameraUpdateFactory.scrollBy(0,-(float)(view_height/(4))));
+                    mRequestingLocationUpdates = true;
                     startLocationUpdates();
+                    // Desactivation du bouton de localisation
+                    mMap.getUiSettings().setMyLocationButtonEnabled(false);
                     return true;
                 }
             });
-
+            // Stop location updates if we move the camera manually
+            mMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
+                @Override
+                public void onCameraMoveStarted(int i) {
+                    if (autoCameraMove == false)
+                    {
+                        mRequestingLocationUpdates = false;
+                        if (mMap.getUiSettings().isMyLocationButtonEnabled() == false)
+                            mMap.getUiSettings().setMyLocationButtonEnabled(true);
+                    }
+                }
+            });
+            // Gestion des permissions
             if (mLocationPermissionGranted) {
                 mMap.setMyLocationEnabled(true);
-                mMap.getUiSettings().setMyLocationButtonEnabled(true);
             } else {
                 mMap.setMyLocationEnabled(false);
-                mMap.getUiSettings().setMyLocationButtonEnabled(false);
                 mLastLocation = null;
                 getLocationPermission();
             }
