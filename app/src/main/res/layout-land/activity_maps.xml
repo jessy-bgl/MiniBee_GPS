@@ -46,14 +46,14 @@
             map:elevation="10dp" />
 
         <RelativeLayout
+            android:id="@+id/relativeLayout"
             android:layout_width="40dp"
-            android:layout_height="300dp"
+            android:layout_height="170dp"
             android:layout_alignBottom="@+id/buttons"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
             android:layout_marginBottom="28dp"
-            android:layout_marginLeft="5dp"
-            android:id="@+id/relativeLayout">
+            android:layout_marginLeft="5dp">
 
             <ImageView
                 android:id="@+id/echelle_altitude"
@@ -85,9 +85,9 @@
             android:id="@+id/suppr_altitude"
             android:layout_width="50dp"
             android:layout_height="wrap_content"
-            android:layout_above="@+id/relativeLayout"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
+            android:layout_alignBottom="@+id/relativeLayout"
+            android:layout_alignLeft="@+id/add_altitude"
+            android:layout_alignStart="@+id/add_altitude"
             android:text="-1" />
 
         <Button
@@ -95,8 +95,10 @@
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:layout_above="@+id/suppr_altitude"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_toEndOf="@+id/relativeLayout"
+            android:layout_toRightOf="@+id/relativeLayout"
             android:text="+1" />
 
     </RelativeLayout>

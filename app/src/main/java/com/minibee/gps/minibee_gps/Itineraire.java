@@ -28,10 +28,6 @@ import org.w3c.dom.Attr;
 import org.xml.sax.SAXException;
 
 
-/**
- *
- * @author Beydi Sanogo
- */
 public class Itineraire {
 
     int nombreDePas = 0;
