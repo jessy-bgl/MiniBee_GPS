@@ -56,6 +56,8 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -149,6 +151,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Champ text altitude
     private TextView text_altitude;
 
+    // Zoom camera
+    private float zoom;
+
 
     /**
      * Lors de la création de l'activité (la classe)
@@ -168,6 +173,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Retrieve the content view that renders the map
         setContentView(R.layout.activity_maps);
+
+        // Set zoom camera
+        zoom = 21.0f;
 
         // Set altitude
         altitude = 0;
@@ -237,20 +245,41 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         barre_altitude = (ImageView) findViewById(R.id.barre_altitude);
         echelle_altitude = (ImageView) findViewById(R.id.echelle_altitude);
 
-        // POUR LES TESTS
+        // POUR LES TESTS D'ALTITUDE => A ADAPTER PAR LA SUITE
         Button add_altitude = (Button) findViewById(R.id.add_altitude);
+        // Lorsque l'altitude augmente
         add_altitude.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 altitude += 1;
+                if (zoom <= 21.0f && zoom > 17.0f)
+                {
+                    zoom -= 0.1;
+                    zoom = Math.round(zoom*10);
+                    zoom = zoom / 10;
+                    mMap.moveCamera(CameraUpdateFactory.zoomTo(zoom));
+                    /*mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                            new CameraPosition(myPos, zoom, 90.0f, 0.0f)));*/
+                    Toast.makeText(MapsActivity.this, String.valueOf(zoom), Toast.LENGTH_SHORT).show();
+                }
                 updateAltitudeUI();
             }
         });
         Button suppr_altitude = (Button) findViewById(R.id.suppr_altitude);
+        // Lorsque l'altitude diminue
         suppr_altitude.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                altitude -= 1;
+                if (altitude > 0)
+                    altitude -= 1;
+                if (zoom >= 17.0f && zoom < 21.0f && altitude < 40)
+                {
+                    zoom += 0.1f;
+                    zoom = Math.round(zoom*10);
+                    zoom = zoom / 10;
+                    mMap.moveCamera(CameraUpdateFactory.zoomTo(zoom));
+                    Toast.makeText(MapsActivity.this, String.valueOf(zoom), Toast.LENGTH_SHORT).show();
+                }
                 updateAltitudeUI();
             }
         });
@@ -372,7 +401,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 {
                     autoCameraMove = true;
                     mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                            new CameraPosition(myPos, 18.0f, 90.0f, 0.0f)));
+                            new CameraPosition(myPos, zoom, 90.0f, 0.0f)));
 
                     // Recuperation de la hauteur de la vue & decentrage de la camera
                     view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
@@ -453,7 +482,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             // Affichage & positionnement de la camera + zoom (entre 2.0 et 21.0)
                             // + tilt (=inclinaison, entre 0 et 90)
                             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                                    new CameraPosition(Paris, 18.0f, 90.0f, 0.0f)));
+                                    new CameraPosition(Paris, zoom, 90.0f, 0.0f)));
 
                             // Recuperation de la hauteur de la vue & decentrage de la camera
                             view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
@@ -641,7 +670,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     LatLng myPos = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
                     // Deplacement de la camera
                     mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                            new CameraPosition(myPos, 18.0f, 90.0f, 0.0f)));
+                            new CameraPosition(myPos, zoom, 90.0f, 0.0f)));
                     mMap.moveCamera(CameraUpdateFactory.scrollBy(0,-(float)(view_height/(4))));
                     mRequestingLocationUpdates = true;
                     startLocationUpdates();
