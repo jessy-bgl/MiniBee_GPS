@@ -251,16 +251,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         add_altitude.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // Modification de l'altitude
                 altitude += 1;
+                // Ajustement du zoom
                 if (zoom <= 21.0f && zoom > 17.0f)
                 {
                     zoom -= 0.1;
                     zoom = Math.round(zoom*10);
                     zoom = zoom / 10;
                     mMap.moveCamera(CameraUpdateFactory.zoomTo(zoom));
-                    /*mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                            new CameraPosition(myPos, zoom, 90.0f, 0.0f)));*/
-                    Toast.makeText(MapsActivity.this, String.valueOf(zoom), Toast.LENGTH_SHORT).show();
                 }
                 updateAltitudeUI();
             }
@@ -270,15 +269,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         suppr_altitude.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // Modification de l'altitude
                 if (altitude > 0)
                     altitude -= 1;
+                // Ajustement du zoom
                 if (zoom >= 17.0f && zoom < 21.0f && altitude < 40)
                 {
                     zoom += 0.1f;
                     zoom = Math.round(zoom*10);
                     zoom = zoom / 10;
                     mMap.moveCamera(CameraUpdateFactory.zoomTo(zoom));
-                    Toast.makeText(MapsActivity.this, String.valueOf(zoom), Toast.LENGTH_SHORT).show();
                 }
                 updateAltitudeUI();
             }
