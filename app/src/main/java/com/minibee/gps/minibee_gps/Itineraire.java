@@ -6,6 +6,7 @@ import android.content.Context;
 import java.io.File;
 import java.io.IOException;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -219,8 +220,8 @@ public class Itineraire {
     }
 
 
-    public static List<Position> getItineraire(){
-        List<Position> positions = null;
+    public List<Position> getItineraire(){
+        List<Position> positions = new ArrayList<Position>();
         float _latitude, _longitude, _altitude;
         try {
             File fXmlFile = new File(path_file + xmlFile);
@@ -253,7 +254,7 @@ public class Itineraire {
                     //System.out.println("latitude : " + _latitude);
                     //System.out.println("longitude : " + _longitude);
                     //System.out.println("altitude : " + _altitude);
-                    // positions.add(new Position())
+                    positions.add(new Position(_latitude, _longitude, _altitude));
                 }
             }
 

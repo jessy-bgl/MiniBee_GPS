@@ -9,14 +9,23 @@
         android:id="@+id/autoCompleteTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
         <requestFocus />
     </AutoCompleteTextView>
 
-    <TextView
-        android:id="@+id/resultats_recherche"
+    <AutoCompleteTextView
+        android:id="@+id/autoCompleteTextView2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <requestFocus />
+    </AutoCompleteTextView>
+
+    <Button
+        android:id="@+id/valid_search"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Résultats"
-        android:textSize="18sp" />
+        android:background="@color/colorPrimary"
+        android:text="Valider" />
 
 </LinearLayout>

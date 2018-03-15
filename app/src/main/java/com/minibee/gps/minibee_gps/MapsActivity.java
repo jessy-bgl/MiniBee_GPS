@@ -40,16 +40,20 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -58,6 +62,8 @@ import com.google.android.gms.tasks.Task;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -153,6 +159,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // Zoom camera
     private float zoom;
+
+    // Identifiant de la requete de destination
+    public final static int DESTINATION_REQUEST = 0;
 
 
     /**
@@ -452,6 +461,45 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         break;
                 }
                 break;
+            // Recuperation des coordonnees de depart & arrivee
+            case DESTINATION_REQUEST:
+                if (resultCode == RESULT_OK) {
+                    List<Marker> markers = new ArrayList<Marker>();
+                    // Recuperation des coordonnees GPS de depart et d'arrivee
+                    double lat_depart = data.getDoubleExtra("lat_depart", 0);
+                    double lon_depart = data.getDoubleExtra("lon_depart", 0);
+                    double lat_arrivee = data.getDoubleExtra("lat_arrivee", 0);
+                    double lon_arrivee = data.getDoubleExtra("lon_arrivee", 0);
+                    // Cas où position de depart automatique (notre position)
+                    if (lat_depart ==0 && lon_depart ==0) {
+                        lat_depart = mLastLocation.getLatitude();
+                        lon_depart = mLastLocation.getLongitude();
+                    }
+                    // Ajout des coordonnees dans un fichier XML (pour envoyer au serveur)
+                    try {
+                        positionsInXML(lat_depart, lon_depart, lat_arrivee, lon_arrivee);
+                    } catch (TransformerException e) {
+                        e.printStackTrace();
+                    }
+                    // Creation des marqueurs & ajout sur la map
+                    LatLng pt;
+                    pt = new LatLng(lat_depart, lon_depart);
+                    Marker marqueur_depart = mMap.addMarker(new MarkerOptions().position(pt));
+                    markers.add(marqueur_depart);
+                    pt = new LatLng(lat_arrivee, lon_arrivee); // Position d'arrivee
+                    Marker marqueur_arrivee = mMap.addMarker(new MarkerOptions().position(pt));
+                    markers.add(marqueur_arrivee);
+                    // Centrage de la camera sur les marqueurs
+                    LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                    for (Marker marker : markers) {
+                        builder.include(marker.getPosition());
+                    }
+                    LatLngBounds bounds = builder.build();
+                    int width = getResources().getDisplayMetrics().widthPixels;
+                    int padding = (int) (width * 0.10); // offset from edges of the map in pixels
+                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+                    mMap.animateCamera(cu);
+                }
         }
     }
 
@@ -748,7 +796,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             case R.id.nav_search:
                 try {
                     Intent i = new Intent(MapsActivity.this, DepartArrivee.class);
-                    startActivity(i);
+                    startActivityForResult(i, DESTINATION_REQUEST);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -764,6 +812,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return true;
     }
 
+    // Fonction d'ajustement de la position et de la couleur de la barre d'altitude
+    public void updateAltitudeUI() {
+        text_altitude.setText(altitude + " m");
+        // Position
+        float unite = hauteur_echelle_altitude / (required_altitude*2);
+        if ( (altitude < required_altitude * 2 - 1) && (altitude > 0))
+            barre_altitude.setY(initial_altitude_bar_position_y - (altitude * unite));
+        // Couleur
+        float diff = abs(required_altitude - altitude);
+        if (diff > 5 && diff <= 10) barre_altitude.setBackgroundColor(Color.rgb(231,188,116));
+        else if (diff > 10) barre_altitude.setBackgroundColor(Color.RED);
+        else barre_altitude.setBackgroundColor(Color.GREEN);
+    }
+
     // Fonction d'ecriture de notre position dans un XML
     public void positionInXML() throws TransformerException {
         Itineraire itineraire = new Itineraire(getApplicationContext(), getFilesDir().getAbsolutePath()+"/");
@@ -777,23 +839,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (IOException ex) {
             Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        //Itineraire.getItineraire();
+        //System.out.println(itineraire.getItineraire());
     }
 
-
-    // Fonction d'ajustement de la position et de la couleur de la barre d'altitude
-    public void updateAltitudeUI() {
-        text_altitude.setText(altitude + " m");
-        // Position
-        float unite = hauteur_echelle_altitude / (required_altitude*2);
-        if ( (altitude < required_altitude * 2 - 1) && (altitude > 0))
-            barre_altitude.setY(initial_altitude_bar_position_y - (altitude * unite));
-        // Couleur
-        float diff = abs(required_altitude - altitude);
-        if (diff > 5 && diff <= 10) barre_altitude.setBackgroundColor(Color.rgb(231,188,116));
-        else if (diff > 10) barre_altitude.setBackgroundColor(Color.RED);
-        else barre_altitude.setBackgroundColor(Color.GREEN);
+    // Fonction d'ecriture des positions de depart/arrivee dans un XML
+    public void positionsInXML(double lat_depart, double lon_depart, double lat_arrivee, double lon_arrivee) throws TransformerException {
+        Itineraire itineraire = new Itineraire(getApplicationContext(), getFilesDir().getAbsolutePath()+"/");
+        try {
+            itineraire.addPosition((float) lat_depart, (float) lon_depart,0.f);
+            itineraire.addPosition((float) lat_arrivee, (float) lon_arrivee,0.f);
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SAXException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        //System.out.println(itineraire.getItineraire());
     }
 
     @Override

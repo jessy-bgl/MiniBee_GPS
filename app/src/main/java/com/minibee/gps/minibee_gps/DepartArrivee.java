@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.TextView;
@@ -33,7 +35,7 @@ import android.widget.Toast;
 
 //import com.javacodegeeks.androidgoogleplacesautocomplete.R;
 
-public class DepartArrivee extends Activity implements OnItemClickListener {
+public class DepartArrivee extends Activity {
 
     private static final String LOG_TAG = "Google Places Autocomplete";
     private static final String PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place";
@@ -42,40 +44,84 @@ public class DepartArrivee extends Activity implements OnItemClickListener {
 
     private static final String API_KEY = "AIzaSyCClg3TKdjO06Flg3lVM0KNnxIbvgJaGgw";
 
-    double lat = 0,lon =0;
+    double lat_depart = 0,lon_depart =0;
+    double lat_arrivee = 0,lon_arrivee =0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.address );
+
+        // Autocompletion de Google sur les barres de recherche
         AutoCompleteTextView autoCompView = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView);
-
+        autoCompView.setHint("Ma position");
         autoCompView.setAdapter(new GooglePlacesAutocompleteAdapter(this, R.layout.list_item));
-        autoCompView.setOnItemClickListener(this);
-    }
 
-    public void onItemClick(AdapterView adapterView, View view, int position, long id) {
-        String str = (String) adapterView.getItemAtPosition(position);
-        //Toast.makeText(this, str, Toast.LENGTH_SHORT).show();
-        TextView resultats_recherche = findViewById(R.id.resultats_recherche);
+        AutoCompleteTextView autoCompView2 = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView2);
+        autoCompView2.setAdapter(new GooglePlacesAutocompleteAdapter(this, R.layout.list_item));
 
-        try
-        {
-            Geocoder geoCoder = new Geocoder( this , Locale.getDefault() );
+        // Creation des listeners specifiques aux barres de recherche pour recuperer les coordonnees GPS
+        OnItemClickListener ocl_depart = new OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                String str = (String) adapterView.getItemAtPosition(i);
+                try
+                {
+                    Geocoder geoCoder = new Geocoder( getApplicationContext() , Locale.getDefault() );
 
-            List<Address> addresses = geoCoder.getFromLocationName(str , 1);
-            if (addresses.size() > 0)
-            {
-                lat = addresses.get ( 0 ).getLatitude ();
-                lon = addresses.get ( 0 ).getLongitude ();
+                    List<Address> addresses = geoCoder.getFromLocationName(str , 1);
+                    if (addresses.size() > 0)
+                    {
+                        lat_depart = addresses.get ( 0 ).getLatitude ();
+                        lon_depart = addresses.get ( 0 ).getLongitude ();
+                    }
+                }
+                catch(Exception e)
+                {
+                    e.printStackTrace();
+                }
             }
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-        }
+        };
+        OnItemClickListener ocl_arrivee = new OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                String str = (String) adapterView.getItemAtPosition(i);
+                try
+                {
+                    Geocoder geoCoder = new Geocoder( getApplicationContext() , Locale.getDefault() );
 
-        resultats_recherche.setText ( str + " " + lat + " " + lon );
+                    List<Address> addresses = geoCoder.getFromLocationName(str , 1);
+                    if (addresses.size() > 0)
+                    {
+                        lat_arrivee = addresses.get ( 0 ).getLatitude ();
+                        lon_arrivee = addresses.get ( 0 ).getLongitude ();
+                    }
+                }
+                catch(Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        };
+        // Attribution des listeners
+        autoCompView.setOnItemClickListener(ocl_depart);
+        autoCompView2.setOnItemClickListener(ocl_arrivee);
+
+        // Gestion du bouton de validation => redirection avec donnees
+        Button valid_search = (Button) findViewById(R.id.valid_search);
+        valid_search.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent returnIntent = new Intent();
+                returnIntent.putExtra("lat_depart", lat_depart);
+                returnIntent.putExtra("lon_depart", lon_depart);
+                returnIntent.putExtra("lat_arrivee", lat_arrivee);
+                returnIntent.putExtra("lon_arrivee", lon_arrivee);
+                setResult(RESULT_OK, returnIntent);
+                finish();
+            }
+        });
+
     }
 
     @SuppressLint("LongLogTag")
