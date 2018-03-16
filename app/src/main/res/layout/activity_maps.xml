@@ -28,6 +28,13 @@
             android:layout_height="75dp"
             android:layout_alignParentBottom="true"/>
 
+        <fragment
+            android:id="@+id/itinerary_bar"
+            android:name="com.minibee.gps.minibee_gps.BarreItineraire"
+            android:layout_width="match_parent"
+            android:layout_height="75dp"
+            android:layout_alignParentBottom="true"/>
+
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/buttons"
             android:layout_width="65dp"

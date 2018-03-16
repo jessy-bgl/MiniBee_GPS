@@ -3,9 +3,13 @@ package com.minibee.gps.minibee_gps;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -43,8 +47,8 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -60,14 +64,11 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
@@ -79,7 +80,7 @@ import static java.lang.Math.abs;
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
         GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks,
         NavigationView.OnNavigationItemSelectedListener, BottomNavigationView.OnNavigationItemSelectedListener,
-        BarreMenuInfo.OnFragmentInteractionListener {
+        BarreMenuInfo.OnFragmentInteractionListener, BarreItineraire.OnFragmentInteractionListener {
 
     private static final String TAG = MapsActivity.class.getSimpleName();
     // Google Map (objet)
@@ -163,6 +164,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Identifiant de la requete de destination
     public final static int DESTINATION_REQUEST = 0;
 
+    View barre_itineraire;
+
 
     /**
      * Lors de la création de l'activité (la classe)
@@ -188,7 +191,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Set altitude
         altitude = 0;
-        required_altitude = 50;
+        required_altitude = 25;
         text_altitude = (TextView) findViewById(R.id.text_altitude);
         text_altitude.setText((int) altitude + " m");
 
@@ -241,6 +244,34 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
+        // Barre inferieure (fragment) avec bouton itineraire (cachée par defaut)
+        barre_itineraire = findViewById(R.id.itinerary_bar);
+        barre_itineraire.setVisibility(View.GONE);
+
+        // Bouton "itineraire"
+        Button btn_itineraire = (Button) findViewById(R.id.btn_itineraire);
+        btn_itineraire.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Cacher la barre inferieure
+                barre_itineraire.setVisibility(View.GONE);
+                // Suppression des marqueurs
+                mMap.clear();
+                // Centrer sur notre position
+                LatLng myPos = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(
+                        new CameraPosition(myPos, zoom, 90.0f, 0.0f)));
+                // Activation du suivi temps reel
+                mRequestingLocationUpdates = true;
+                // Desactivation du bouton de localisation
+                mMap.getUiSettings().setMyLocationButtonEnabled(false);
+            }
+        });
+
+        // Barre & echelle d'altitude
+        barre_altitude = (ImageView) findViewById(R.id.barre_altitude);
+        echelle_altitude = (ImageView) findViewById(R.id.echelle_altitude);
+
         // Kick off the process of building the LocationCallback, LocationRequest, and
         // LocationSettingsRequest objects.
         createLocationCallback();
@@ -250,48 +281,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Creation de l'API client pour acceder aux services Google Play
         buildGoogleAPIClient();
 
-        // Barre & echelle d'altitude
-        barre_altitude = (ImageView) findViewById(R.id.barre_altitude);
-        echelle_altitude = (ImageView) findViewById(R.id.echelle_altitude);
-
         // POUR LES TESTS D'ALTITUDE => A ADAPTER PAR LA SUITE
-        Button add_altitude = (Button) findViewById(R.id.add_altitude);
-        // Lorsque l'altitude augmente
-        add_altitude.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Modification de l'altitude
-                altitude += 1;
-                // Ajustement du zoom
-                if (zoom <= 21.0f && zoom > 17.0f)
-                {
-                    zoom -= 0.1;
-                    zoom = Math.round(zoom*10);
-                    zoom = zoom / 10;
-                    mMap.moveCamera(CameraUpdateFactory.zoomTo(zoom));
-                }
-                updateAltitudeUI();
-            }
-        });
-        Button suppr_altitude = (Button) findViewById(R.id.suppr_altitude);
-        // Lorsque l'altitude diminue
-        suppr_altitude.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Modification de l'altitude
-                if (altitude > 0)
-                    altitude -= 1;
-                // Ajustement du zoom
-                if (zoom >= 17.0f && zoom < 21.0f && altitude < 40)
-                {
-                    zoom += 0.1f;
-                    zoom = Math.round(zoom*10);
-                    zoom = zoom / 10;
-                    mMap.moveCamera(CameraUpdateFactory.zoomTo(zoom));
-                }
-                updateAltitudeUI();
-            }
-        });
+        modifyAltitude();
 
     }
 
@@ -353,17 +344,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Customise the styling of the base map using a JSON object defined in a raw resource file
         mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json));
 
-        //met un marqueur sur paris
-        /*LatLng paris = new LatLng(48.864716, 2.349014);
-        googleMap.addMarker(new MarkerOptions().position(paris)
-                .title("marqueur PARIS"));
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(paris));*/
-
         // Prompt the user for permission
         getLocationPermission();
 
         // Turn on the My Location layer and the related control on the map
         updateLocationUI();
+
+        // Get the view height of the map
+        view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
 
         // Get the current location of the device and set the position to the map
         //getDeviceLocation(); // locate 1 time
@@ -409,11 +397,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (mRequestingLocationUpdates == true)
                 {
                     autoCameraMove = true;
+                    // Deplacement de la camera
+                    /*float dy = -(float)(view_height/(4)); // Y distance scrolled
+
+                    CameraPosition position = mMap.getCameraPosition();
+                    Projection projection = mMap.getProjection();
+
+                    LatLng mapTarget = myPos;
+                    float originalZoom = zoom;
+
+                    Point mapPoint = projection.toScreenLocation(mapTarget);
+                    mapPoint.y += dy;
+                    mapTarget = projection.fromScreenLocation(mapPoint);
+
+                    CameraPosition newPosition = new CameraPosition(position)
+                            .target(mapTarget)
+                            .zoom(originalZoom)
+                            .build();
+
+                    mMap.moveCamera(CameraUpdateFactory.newCameraPosition(newPosition));
+                    */
                     mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                             new CameraPosition(myPos, zoom, 90.0f, 0.0f)));
-
-                    // Recuperation de la hauteur de la vue & decentrage de la camera
-                    view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
+                    // Decentrage de la camera
                     mMap.moveCamera(CameraUpdateFactory.scrollBy(0,-(float)(view_height/(4))));
                     autoCameraMove = false;
                 }
@@ -499,6 +505,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     int padding = (int) (width * 0.10); // offset from edges of the map in pixels
                     CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
                     mMap.animateCamera(cu);
+                    // Barre (fragment) avec bouton itineraire
+                    barre_itineraire.setVisibility(View.VISIBLE);
                 }
         }
     }
@@ -717,9 +725,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     // Notre position
                     LatLng myPos = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
                     // Deplacement de la camera
-                    mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(
                             new CameraPosition(myPos, zoom, 90.0f, 0.0f)));
-                    mMap.moveCamera(CameraUpdateFactory.scrollBy(0,-(float)(view_height/(4))));
                     mRequestingLocationUpdates = true;
                     startLocationUpdates();
                     // Desactivation du bouton de localisation
@@ -861,6 +868,47 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onFragmentInteraction(Uri uri) {
 
+    }
+
+    // Fonction de modification manuelle d'altitude
+    public void modifyAltitude() {
+        Button add_altitude = (Button) findViewById(R.id.add_altitude);
+        // Lorsque l'altitude augmente
+        add_altitude.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Modification de l'altitude
+                altitude += 1;
+                // Ajustement du zoom
+                if (zoom <= 21.0f && zoom > 17.0f)
+                {
+                    zoom -= 0.1;
+                    zoom = Math.round(zoom*10);
+                    zoom = zoom / 10;
+                    mMap.moveCamera(CameraUpdateFactory.zoomTo(zoom));
+                }
+                updateAltitudeUI();
+            }
+        });
+        Button suppr_altitude = (Button) findViewById(R.id.suppr_altitude);
+        // Lorsque l'altitude diminue
+        suppr_altitude.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Modification de l'altitude
+                if (altitude > 0)
+                    altitude -= 1;
+                // Ajustement du zoom
+                if (zoom >= 17.0f && zoom < 21.0f && altitude < 40)
+                {
+                    zoom += 0.1f;
+                    zoom = Math.round(zoom*10);
+                    zoom = zoom / 10;
+                    mMap.moveCamera(CameraUpdateFactory.zoomTo(zoom));
+                }
+                updateAltitudeUI();
+            }
+        });
     }
 
 }
