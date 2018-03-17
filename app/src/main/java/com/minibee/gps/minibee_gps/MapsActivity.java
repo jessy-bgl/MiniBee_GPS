@@ -10,6 +10,10 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -26,6 +30,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.support.design.widget.BottomNavigationView;
@@ -131,7 +136,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Boolean autoCameraMove;
 
     // The desired interval for location updates. Inexact. Updates may be more or less frequent.
-    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 5000;
+    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
 
     // The fastest rate for active location updates. Updates will never be more frequent than this value.
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
@@ -164,7 +169,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Identifiant de la requete de destination
     public final static int DESTINATION_REQUEST = 0;
 
-    View barre_itineraire;
+    // Barre inferieur avec bouton "itineraire"
+    private View barre_itineraire;
+
+    // Bouton myLocationButton
+    private ImageView my_location_btn;
+
+
+    private static SensorManager mySensorManager;
+    private boolean sersorrunning;
+    private MyCompassView myCompassView;
 
 
     /**
@@ -199,6 +213,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         vitesse = 100;
         text_vitesse = (TextView) findViewById(R.id.text_vitesse);
         text_vitesse.setText((int) vitesse + " km/h");
+
+        // MyLocationButton
+        my_location_btn = (ImageView) findViewById(R.id.my_location_btn);
 
         // Construct a FusedLocationProviderClient
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -258,19 +275,36 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Suppression des marqueurs
                 mMap.clear();
                 // Centrer sur notre position
+                mMap.setPadding(0,view_height/2,0,0);
                 LatLng myPos = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(
                         new CameraPosition(myPos, zoom, 90.0f, 0.0f)));
                 // Activation du suivi temps reel
                 mRequestingLocationUpdates = true;
                 // Desactivation du bouton de localisation
-                mMap.getUiSettings().setMyLocationButtonEnabled(false);
+                my_location_btn.setVisibility(View.GONE);
             }
         });
 
         // Barre & echelle d'altitude
         barre_altitude = (ImageView) findViewById(R.id.barre_altitude);
         echelle_altitude = (ImageView) findViewById(R.id.echelle_altitude);
+
+
+        // Compass
+        myCompassView = (MyCompassView)findViewById(R.id.my_compass_view);
+        mySensorManager = (SensorManager)getSystemService(getApplicationContext().SENSOR_SERVICE);
+        List<Sensor> mySensors = mySensorManager.getSensorList(Sensor.TYPE_ORIENTATION);
+        if(mySensors.size() > 0){
+            mySensorManager.registerListener(mySensorEventListener, mySensors.get(0), SensorManager.SENSOR_DELAY_NORMAL);
+            sersorrunning = true;
+            //Toast.makeText(this, "Start ORIENTATION Sensor", Toast.LENGTH_LONG).show();
+        }
+        else{
+            //Toast.makeText(this, "No ORIENTATION Sensor", Toast.LENGTH_LONG).show();
+            sersorrunning = false;
+            finish();
+        }
 
         // Kick off the process of building the LocationCallback, LocationRequest, and
         // LocationSettingsRequest objects.
@@ -284,6 +318,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // POUR LES TESTS D'ALTITUDE => A ADAPTER PAR LA SUITE
         modifyAltitude();
 
+    }
+
+    // Pour le compass
+    private SensorEventListener mySensorEventListener = new SensorEventListener(){
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+        }
+
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            myCompassView.updateDirection((float)event.values[0]);
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if(sersorrunning){
+            mySensorManager.unregisterListener(mySensorEventListener);
+        }
     }
 
     /**
@@ -335,7 +392,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
         // Mise a jour de la barre d'altitude
         hauteur_echelle_altitude = echelle_altitude.getHeight();
         initial_altitude_bar_position_y = barre_altitude.getY();
@@ -344,18 +400,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Customise the styling of the base map using a JSON object defined in a raw resource file
         mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json));
 
+        // Get the view height of the map
+        view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
+        mMap.setPadding(0,view_height / 2,0,0);
+
         // Prompt the user for permission
         getLocationPermission();
 
         // Turn on the My Location layer and the related control on the map
         updateLocationUI();
 
-        // Get the view height of the map
-        view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
-
         // Get the current location of the device and set the position to the map
         //getDeviceLocation(); // locate 1 time
         startLocationUpdates();
+
     }
 
     /**
@@ -398,29 +456,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 {
                     autoCameraMove = true;
                     // Deplacement de la camera
-                    /*float dy = -(float)(view_height/(4)); // Y distance scrolled
-
-                    CameraPosition position = mMap.getCameraPosition();
-                    Projection projection = mMap.getProjection();
-
-                    LatLng mapTarget = myPos;
-                    float originalZoom = zoom;
-
-                    Point mapPoint = projection.toScreenLocation(mapTarget);
-                    mapPoint.y += dy;
-                    mapTarget = projection.fromScreenLocation(mapPoint);
-
-                    CameraPosition newPosition = new CameraPosition(position)
-                            .target(mapTarget)
-                            .zoom(originalZoom)
-                            .build();
-
-                    mMap.moveCamera(CameraUpdateFactory.newCameraPosition(newPosition));
-                    */
-                    mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(
                             new CameraPosition(myPos, zoom, 90.0f, 0.0f)));
-                    // Decentrage de la camera
-                    mMap.moveCamera(CameraUpdateFactory.scrollBy(0,-(float)(view_height/(4))));
                     autoCameraMove = false;
                 }
 
@@ -496,6 +533,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Marker marqueur_arrivee = mMap.addMarker(new MarkerOptions().position(pt));
                     markers.add(marqueur_arrivee);
                     // Centrage de la camera sur les marqueurs
+                    mMap.setPadding(0,0,0,0);
                     LatLngBounds.Builder builder = new LatLngBounds.Builder();
                     for (Marker marker : markers) {
                         builder.include(marker.getPosition());
@@ -558,7 +596,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             Log.e(TAG, "Exception: %s", task.getException());
                             mMap.moveCamera(CameraUpdateFactory
                                     .newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
-                            mMap.getUiSettings().setMyLocationButtonEnabled(false);
+                            my_location_btn.setVisibility(View.GONE);
                         }
                     }
                 });
@@ -663,11 +701,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onResume();
         // Within {@code onPause()}, we remove location updates. Here, we resume receiving
         // location updates if the user has requested them.
+        mRequestingLocationUpdates = true;
         if (mRequestingLocationUpdates && mLocationPermissionGranted) {
             startLocationUpdates();
         } else if (!mLocationPermissionGranted) {
             getLocationPermission();
-            //requestPermissions();
         }
     }
 
@@ -699,7 +737,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         }
-        updateLocationUI();
+        //updateLocationUI();
     }
 
 
@@ -715,13 +753,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mMap.setIndoorEnabled(false);
             // Desactivation de "Map Toolbar" quand on clic sur un marqueur
             mMap.getUiSettings().setMapToolbarEnabled(false);
-            // Desactivation du bouton de localisation par defaut
+            // Desactivation du bouton de localisation par defaut & de la boussole de google
+            mMap.getUiSettings().setCompassEnabled(false);
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
+            my_location_btn.setVisibility(View.GONE);
             // Modification du comportement du bouton de localisation : decentrage + reactivation suivi si necessaire
-            mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener(){
+            my_location_btn.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public boolean onMyLocationButtonClick()
-                {
+                public void onClick(View view) {
                     // Notre position
                     LatLng myPos = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
                     // Deplacement de la camera
@@ -730,8 +769,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     mRequestingLocationUpdates = true;
                     startLocationUpdates();
                     // Desactivation du bouton de localisation
-                    mMap.getUiSettings().setMyLocationButtonEnabled(false);
-                    return true;
+                    my_location_btn.setVisibility(View.GONE);
                 }
             });
             // Stop location updates if we move the camera manually
@@ -741,8 +779,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if (autoCameraMove == false)
                     {
                         mRequestingLocationUpdates = false;
-                        if (mMap.getUiSettings().isMyLocationButtonEnabled() == false)
-                            mMap.getUiSettings().setMyLocationButtonEnabled(true);
+                        if (my_location_btn.getVisibility() == View.GONE)
+                            my_location_btn.setVisibility(View.VISIBLE);
                     }
                 }
             });
@@ -754,6 +792,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mLastLocation = null;
                 getLocationPermission();
             }
+
         } catch (SecurityException e)  {
             Log.e("Exception: %s", e.getMessage());
         }
@@ -885,7 +924,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     zoom -= 0.1;
                     zoom = Math.round(zoom*10);
                     zoom = zoom / 10;
-                    mMap.moveCamera(CameraUpdateFactory.zoomTo(zoom));
+                    mMap.animateCamera(CameraUpdateFactory.zoomTo(zoom));
                 }
                 updateAltitudeUI();
             }
@@ -904,7 +943,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     zoom += 0.1f;
                     zoom = Math.round(zoom*10);
                     zoom = zoom / 10;
-                    mMap.moveCamera(CameraUpdateFactory.zoomTo(zoom));
+                    mMap.animateCamera(CameraUpdateFactory.zoomTo(zoom));
                 }
                 updateAltitudeUI();
             }

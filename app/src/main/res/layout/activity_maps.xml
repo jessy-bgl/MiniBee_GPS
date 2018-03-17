@@ -106,6 +106,22 @@
             android:layout_alignParentStart="true"
             android:text="+1" />
 
+        <ImageView
+            android:id="@+id/my_location_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignEnd="@+id/buttons"
+            android:layout_alignParentTop="true"
+            android:layout_alignRight="@+id/buttons"
+            android:layout_marginTop="12dp"
+            app:srcCompat="@android:drawable/ic_menu_mylocation" />
+
+        <view
+            class="com.minibee.gps.minibee_gps.MyCompassView"
+            android:id="@+id/my_compass_view"
+            android:layout_width="50dp"
+            android:layout_height="50dp" />
+
     </RelativeLayout>
 
     <android.support.design.widget.NavigationView
