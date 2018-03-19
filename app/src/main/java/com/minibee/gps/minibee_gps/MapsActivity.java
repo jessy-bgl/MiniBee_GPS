@@ -256,7 +256,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        // Bouton menu de la barre de navigation
+        // Bouton "menu" de la barre de navigation inferieure
         ImageButton btn_menu = findViewById(R.id.toolbar_menu);
         btn_menu.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -344,8 +344,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     // Pour la boussole
-    private SensorEventListener mySensorEventListener = new SensorEventListener(){
-
+    private SensorEventListener mySensorEventListener = new SensorEventListener() {
         @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
@@ -356,11 +355,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             myCompassView.updateDirection((float)event.values[0]);
         }
     };
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         if(sersorrunning){
             mySensorManager.unregisterListener(mySensorEventListener);
         }
@@ -482,11 +479,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (mRequestingLocationUpdates == true)
                 {
                     autoCameraMove = true;
-                    // Deplacement de la camera
+                    // Deplacement de la camera + zoom
                     LatLngInterpolator lli = new LatLngInterpolator.Linear();
-
                     if (marker != null) {
-                        animateMarkerToICS(marker, myPos, lli);
+                        MarkerAnimation.animateMarkerToICS(marker, myPos, lli);
                         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition(
                                 marker.getPosition(), zoom, 90.0f, 0.0f)), 1000, null);
                         /*CameraPosition cameraPosition = new CameraPosition.Builder()
@@ -508,7 +504,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 .build();                   // Creates a CameraPosition from the builder
                         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));*/
                     }
-
                     autoCameraMove = false;
                 }
 
@@ -576,15 +571,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         e.printStackTrace();
                     }
                     // Creation des marqueurs & ajout sur la map
-                    LatLng pt_depart;
-                    LatLng pt_arrivee;
+                    LatLng pt_depart, pt_arrivee;
                     pt_depart = new LatLng(lat_depart, lon_depart);
+                    pt_arrivee = new LatLng(lat_arrivee, lon_arrivee);
                     Marker marqueur_depart = mMap.addMarker(new MarkerOptions().position(pt_depart));
-                    mMarkers.add(marqueur_depart);
-                    pt_arrivee = new LatLng(lat_arrivee, lon_arrivee); // Position d'arrivee
                     Marker marqueur_arrivee = mMap.addMarker(new MarkerOptions().position(pt_arrivee));
+                    mMarkers.add(marqueur_depart);
                     mMarkers.add(marqueur_arrivee);
-                    // Creation d'une ligne entre les marqueurs
+                    // Creation d'une ligne reliant les marqueurs
                     PolylineOptions line = new PolylineOptions()
                             .add(pt_depart)
                             .add(pt_arrivee);
@@ -757,8 +751,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onResume();
         // Within {@code onPause()}, we remove location updates. Here, we resume receiving
         // location updates if the user has requested them.
+        // Si on ne fait pas de recherche d'itineraire => activation de la localisation temps reel
         if (search == false)
             mRequestingLocationUpdates = true;
+        // Activation de la localisation temps reel
         if (mRequestingLocationUpdates && mLocationPermissionGranted) {
             startLocationUpdates();
         } else if (!mLocationPermissionGranted) {
@@ -808,7 +804,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         try {
             // Desactivation de "Indoor Levels"
             mMap.setIndoorEnabled(false);
-            // Desactivation de "Map Toolbar" quand on clic sur un marqueur
+            // Desactivation de "Map Toolbar" quand on clique sur un marqueur
             mMap.getUiSettings().setMapToolbarEnabled(false);
             // Desactivation du bouton de localisation par defaut & de la boussole de google
             mMap.getUiSettings().setCompassEnabled(false);
@@ -833,12 +829,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
                 @Override
                 public void onCameraMoveStarted(int i) {
-                    if (autoCameraMove == false)
-                    {
-                        mRequestingLocationUpdates = false;
-                        if (my_location_btn.getVisibility() == View.GONE)
-                            my_location_btn.setVisibility(View.VISIBLE);
-                    }
+                if (autoCameraMove == false)
+                {
+                    mRequestingLocationUpdates = false;
+                    // Si le bouton de localisation est desactive => on le reactive
+                    if (my_location_btn.getVisibility() == View.GONE)
+                        my_location_btn.setVisibility(View.VISIBLE);
+                }
                 }
             });
             // Gestion des permissions
@@ -849,7 +846,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mLastLocation = null;
                 getLocationPermission();
             }
-
         } catch (SecurityException e)  {
             Log.e("Exception: %s", e.getMessage());
         }
@@ -887,7 +883,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
-     * Action lorsqu'on clic sur un item selectionnable dans l'application
+     * Action lorsqu'on clic sur un item du menu de l'application
      * @param item
      * @return
      */
@@ -929,53 +925,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (diff > 5 && diff <= 10) barre_altitude.setBackgroundColor(Color.rgb(231,188,116));
         else if (diff > 10) barre_altitude.setBackgroundColor(Color.RED);
         else barre_altitude.setBackgroundColor(Color.GREEN);
-    }
-
-    /**
-     * Fonction d'ecriture de notre position dans un XML
-     * @throws TransformerException
-     */
-    public void positionInXML() throws TransformerException {
-        Itineraire itineraire = new Itineraire(getApplicationContext(), getFilesDir().getAbsolutePath()+"/");
-        // Ecriture de notre position dans un XML
-        try {
-            itineraire.addPosition((float) mLastLocation.getLatitude(), (float) mLastLocation.getLongitude(),0.f);
-        } catch (ParserConfigurationException ex) {
-            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SAXException ex) {
-            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        //System.out.println(itineraire.getItineraire());
-    }
-
-    /**
-     * Fonction d'ecriture des positions de depart/arrivee dans un XML
-     * @param lat_depart
-     * @param lon_depart
-     * @param lat_arrivee
-     * @param lon_arrivee
-     * @throws TransformerException
-     */
-    public void positionsInXML(double lat_depart, double lon_depart, double lat_arrivee, double lon_arrivee) throws TransformerException {
-        Itineraire itineraire = new Itineraire(getApplicationContext(), getFilesDir().getAbsolutePath()+"/");
-        try {
-            itineraire.addPosition((float) lat_depart, (float) lon_depart,0.f);
-            itineraire.addPosition((float) lat_arrivee, (float) lon_arrivee,0.f);
-        } catch (ParserConfigurationException ex) {
-            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SAXException ex) {
-            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        //System.out.println(itineraire.getItineraire());
-    }
-
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-
     }
 
     /**
@@ -1022,6 +971,48 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
+     * Fonction d'ecriture de notre position dans un XML
+     * @throws TransformerException
+     */
+    public void positionInXML() throws TransformerException {
+        Itineraire itineraire = new Itineraire(getApplicationContext(), getFilesDir().getAbsolutePath()+"/");
+        // Ecriture de notre position dans un XML
+        try {
+            itineraire.addPosition((float) mLastLocation.getLatitude(), (float) mLastLocation.getLongitude(),0.f);
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SAXException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        //System.out.println(itineraire.getItineraire());
+    }
+
+    /**
+     * Fonction d'ecriture des positions de depart/arrivee dans un XML
+     * @param lat_depart
+     * @param lon_depart
+     * @param lat_arrivee
+     * @param lon_arrivee
+     * @throws TransformerException
+     */
+    public void positionsInXML(double lat_depart, double lon_depart, double lat_arrivee, double lon_arrivee) throws TransformerException {
+        Itineraire itineraire = new Itineraire(getApplicationContext(), getFilesDir().getAbsolutePath()+"/");
+        try {
+            itineraire.addPosition((float) lat_depart, (float) lon_depart,0.f);
+            itineraire.addPosition((float) lat_arrivee, (float) lon_arrivee,0.f);
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SAXException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MapsActivity.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        //System.out.println(itineraire.getItineraire());
+    }
+
+    /**
      * Clear map markers
      */
     private void removeMarkers() {
@@ -1031,68 +1022,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMarkers.clear();
     }
 
-    static void animateMarkerToGB(final Marker marker, final LatLng finalPosition, final LatLngInterpolator latLngInterpolator) {
-        final LatLng startPosition = marker.getPosition();
-        final Handler handler = new Handler();
-        final long start = SystemClock.uptimeMillis();
-        final Interpolator interpolator = new AccelerateDecelerateInterpolator();
-        final float durationInMs = 3000;
+    @Override
+    public void onFragmentInteraction(Uri uri) {
 
-        handler.post(new Runnable() {
-            long elapsed;
-            float t;
-            float v;
-
-            @Override
-            public void run() {
-                // Calculate progress using interpolator
-                elapsed = SystemClock.uptimeMillis() - start;
-                t = elapsed / durationInMs;
-                v = interpolator.getInterpolation(t);
-
-                marker.setPosition(latLngInterpolator.interpolate(v, startPosition, finalPosition));
-
-                // Repeat till progress is complete.
-                if (t < 1) {
-                    // Post again 16ms later.
-                    handler.postDelayed(this, 16);
-                }
-            }
-        });
-    }
-
-
-
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    void animateMarkerToHC(final Marker marker, final LatLng finalPosition, final LatLngInterpolator latLngInterpolator) {
-        final LatLng startPosition = marker.getPosition();
-
-        ValueAnimator valueAnimator = new ValueAnimator();
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float v = animation.getAnimatedFraction();
-                LatLng newPosition = latLngInterpolator.interpolate(v, startPosition, finalPosition);
-                marker.setPosition(newPosition);
-            }
-        });
-        valueAnimator.setFloatValues(0, 1); // Ignored.
-        valueAnimator.setDuration(3000);
-        valueAnimator.start();
-    }
-
-    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-    void animateMarkerToICS(Marker marker, LatLng finalPosition, final LatLngInterpolator latLngInterpolator) {
-        TypeEvaluator<LatLng> typeEvaluator = new TypeEvaluator<LatLng>() {
-            @Override
-            public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
-                return latLngInterpolator.interpolate(fraction, startValue, endValue);
-            }
-        };
-        Property<Marker, LatLng> property = Property.of(Marker.class, LatLng.class, "position");
-        ObjectAnimator animator = ObjectAnimator.ofObject(marker, property, typeEvaluator, finalPosition);
-        animator.setDuration(3000);
-        animator.start();
     }
 
 }
