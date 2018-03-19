@@ -1,5 +1,8 @@
 package com.minibee.gps.minibee_gps;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
@@ -136,6 +139,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Boolean for automatic/manual camera movement
     private Boolean autoCameraMove;
 
+    // Boolean : disable automatic camera movement after search
+    private Boolean search;
+
     // The desired interval for location updates. Inexact. Updates may be more or less frequent.
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
 
@@ -230,6 +236,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mRequestingLocationUpdates = true;
         autoCameraMove = false;
+        search = false;
         mSettingsClient = LocationServices.getSettingsClient(this);
 
         // Build the map
@@ -288,6 +295,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(
                         new CameraPosition(myPos, zoom, 90.0f, 0.0f)));
                 // Activation du suivi temps reel
+                search = false;
                 mRequestingLocationUpdates = true;
                 // Desactivation du bouton de localisation
                 my_location_btn.setVisibility(View.GONE);
@@ -452,57 +460,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
 
-                Location previousLocation = mLastLocation;
-                mLastLocation = locationResult.getLastLocation();
-
                 // Recuperation de notre position
+                mLastLocation = locationResult.getLastLocation();
                 LatLng myPos = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-
-
-                /*Marker marker = new Marker();
-                final Handler handler = new Handler();
-                final long start = SystemClock.uptimeMillis();
-                Projection proj = mMap.getProjection();
-                Point startPoint = proj.toScreenLocation(myPos);
-                final LatLng startLatLng = proj.fromScreenLocation(startPoint);
-                final long duration = 500;
-
-                final LinearInterpolator interpolator = new LinearInterpolator();
-
-                handler.post(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        long elapsed = SystemClock.uptimeMillis() - start;
-                        float t = interpolator.getInterpolation((float) elapsed
-                                / duration);
-                        double lng = t * toPosition.longitude + (1 - t)
-                                * startLatLng.longitude;
-                        double lat = t * toPosition.latitude + (1 - t)
-                                * startLatLng.latitude;
-                        marker.setPosition(new LatLng(lat, lng));
-
-                        if (t < 1.0)
-                        {
-                            // Post again 16ms later.
-                            handler.postDelayed(this, 16);
-                        }
-                        else
-                        {
-                            if (hideMarker)
-                            {
-                                marker.setVisible(false);
-                            }
-                            else
-                            {
-                                marker.setVisible(true);
-                            }
-                        }
-                    }
-                });*/
-
-
 
                 // Affichage & positionnement de la camera + zoom (entre 2.0 et 21.0)
                 // + tilt (=inclinaison, entre 0 et 90)
@@ -510,14 +470,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 {
                     autoCameraMove = true;
                     // Deplacement de la camera
-                    //mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition(myPos, zoom, 90.0f, 0.0f)));
-                    CameraPosition cameraPosition = new CameraPosition.Builder()
+                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition(myPos, zoom, 90.0f, 0.0f)), 1000, null);
+                    /*CameraPosition cameraPosition = new CameraPosition.Builder()
                             .target(myPos)             // Sets the center of the map to current location
                             .zoom(zoom)                   // Sets the zoom
                             .bearing(myCompassView.getDirection()) // Sets the orientation of the camera
                             .tilt(90.0f)                   // Sets the tilt of the camera to 90 degrees
                             .build();                   // Creates a CameraPosition from the builder
-                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));*/
                     autoCameraMove = false;
                 }
 
@@ -567,6 +527,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Recuperation des coordonnees de depart & arrivee
             case DESTINATION_REQUEST:
                 if (resultCode == RESULT_OK) {
+                    search = true; // will disable the automatic camera movement
                     // Recuperation des coordonnees GPS de depart et d'arrivee
                     double lat_depart = data.getDoubleExtra("lat_depart", 0);
                     double lon_depart = data.getDoubleExtra("lon_depart", 0);
@@ -740,7 +701,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
-
     /**
      * Prompts the user for permission to use the device location.
      */
@@ -766,6 +726,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onResume();
         // Within {@code onPause()}, we remove location updates. Here, we resume receiving
         // location updates if the user has requested them.
+        if (search == false)
+            mRequestingLocationUpdates = true;
         if (mRequestingLocationUpdates && mLocationPermissionGranted) {
             startLocationUpdates();
         } else if (!mLocationPermissionGranted) {
