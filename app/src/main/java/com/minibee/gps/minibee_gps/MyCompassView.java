@@ -14,6 +14,10 @@ import android.view.View;
 
 public class MyCompassView extends View {
 
+    public float getDirection() {
+        return direction;
+    }
+
     private float direction = 0;
     private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private boolean firstDraw;

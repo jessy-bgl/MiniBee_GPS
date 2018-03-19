@@ -6,12 +6,16 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Color;
+import android.graphics.Interpolator;
+import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.os.Bundle;
@@ -23,6 +27,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -48,6 +53,7 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -57,6 +63,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -169,10 +176,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Bouton myLocationButton
     private ImageView my_location_btn;
 
-
+    // Gestion du sensor pour la boussole
     private static SensorManager mySensorManager;
     private boolean sersorrunning;
+    // Boussole
     private MyCompassView myCompassView;
+
+    // Marqueurs sur la map
+    List<Marker> mMarkers;
 
 
     /**
@@ -210,6 +221,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // MyLocationButton
         my_location_btn = (ImageView) findViewById(R.id.my_location_btn);
+
+        // Marqueurs
+        mMarkers = new ArrayList<Marker>();
 
         // Construct a FusedLocationProviderClient
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -267,7 +281,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Cacher la barre inferieure
                 barre_itineraire.setVisibility(View.GONE);
                 // Suppression des marqueurs
-                mMap.clear();
+                removeMarkers();
                 // Centrer sur notre position
                 mMap.setPadding(0,view_height/2,0,0);
                 LatLng myPos = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
@@ -285,7 +299,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         echelle_altitude = (ImageView) findViewById(R.id.echelle_altitude);
 
 
-        // Compass
+        // Boussole
         myCompassView = (MyCompassView)findViewById(R.id.my_compass_view);
         mySensorManager = (SensorManager)getSystemService(getApplicationContext().SENSOR_SERVICE);
         List<Sensor> mySensors = mySensorManager.getSensorList(Sensor.TYPE_ORIENTATION);
@@ -314,7 +328,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    // Pour le compass
+    // Pour la boussole
     private SensorEventListener mySensorEventListener = new SensorEventListener(){
 
         @Override
@@ -394,7 +408,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Customise the styling of the base map using a JSON object defined in a raw resource file
         mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json));
 
-        // Get the view height of the map
+        // Get the view height of the map & set the padding for a "navigation mode"
         view_height = getSupportFragmentManager().findFragmentById(R.id.map).getView().getHeight();
         mMap.setPadding(0,view_height / 2,0,0);
 
@@ -406,7 +420,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Get the current location of the device and set the position to the map
         //getDeviceLocation(); // locate 1 time
-        startLocationUpdates();
+        startLocationUpdates(); // real-time location
 
     }
 
@@ -438,11 +452,57 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
 
+                Location previousLocation = mLastLocation;
                 mLastLocation = locationResult.getLastLocation();
 
                 // Recuperation de notre position
                 LatLng myPos = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-                LatLng Paris = new LatLng(48.864716, 2.349014);
+
+
+                /*Marker marker = new Marker();
+                final Handler handler = new Handler();
+                final long start = SystemClock.uptimeMillis();
+                Projection proj = mMap.getProjection();
+                Point startPoint = proj.toScreenLocation(myPos);
+                final LatLng startLatLng = proj.fromScreenLocation(startPoint);
+                final long duration = 500;
+
+                final LinearInterpolator interpolator = new LinearInterpolator();
+
+                handler.post(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        long elapsed = SystemClock.uptimeMillis() - start;
+                        float t = interpolator.getInterpolation((float) elapsed
+                                / duration);
+                        double lng = t * toPosition.longitude + (1 - t)
+                                * startLatLng.longitude;
+                        double lat = t * toPosition.latitude + (1 - t)
+                                * startLatLng.latitude;
+                        marker.setPosition(new LatLng(lat, lng));
+
+                        if (t < 1.0)
+                        {
+                            // Post again 16ms later.
+                            handler.postDelayed(this, 16);
+                        }
+                        else
+                        {
+                            if (hideMarker)
+                            {
+                                marker.setVisible(false);
+                            }
+                            else
+                            {
+                                marker.setVisible(true);
+                            }
+                        }
+                    }
+                });*/
+
+
 
                 // Affichage & positionnement de la camera + zoom (entre 2.0 et 21.0)
                 // + tilt (=inclinaison, entre 0 et 90)
@@ -450,8 +510,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 {
                     autoCameraMove = true;
                     // Deplacement de la camera
-                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(
-                            new CameraPosition(myPos, zoom, 90.0f, 0.0f)));
+                    //mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition(myPos, zoom, 90.0f, 0.0f)));
+                    CameraPosition cameraPosition = new CameraPosition.Builder()
+                            .target(myPos)             // Sets the center of the map to current location
+                            .zoom(zoom)                   // Sets the zoom
+                            .bearing(myCompassView.getDirection()) // Sets the orientation of the camera
+                            .tilt(90.0f)                   // Sets the tilt of the camera to 90 degrees
+                            .build();                   // Creates a CameraPosition from the builder
+                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                     autoCameraMove = false;
                 }
 
@@ -501,7 +567,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Recuperation des coordonnees de depart & arrivee
             case DESTINATION_REQUEST:
                 if (resultCode == RESULT_OK) {
-                    List<Marker> markers = new ArrayList<Marker>();
                     // Recuperation des coordonnees GPS de depart et d'arrivee
                     double lat_depart = data.getDoubleExtra("lat_depart", 0);
                     double lon_depart = data.getDoubleExtra("lon_depart", 0);
@@ -519,17 +584,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         e.printStackTrace();
                     }
                     // Creation des marqueurs & ajout sur la map
-                    LatLng pt;
-                    pt = new LatLng(lat_depart, lon_depart);
-                    Marker marqueur_depart = mMap.addMarker(new MarkerOptions().position(pt));
-                    markers.add(marqueur_depart);
-                    pt = new LatLng(lat_arrivee, lon_arrivee); // Position d'arrivee
-                    Marker marqueur_arrivee = mMap.addMarker(new MarkerOptions().position(pt));
-                    markers.add(marqueur_arrivee);
+                    LatLng pt_depart;
+                    LatLng pt_arrivee;
+                    pt_depart = new LatLng(lat_depart, lon_depart);
+                    Marker marqueur_depart = mMap.addMarker(new MarkerOptions().position(pt_depart));
+                    mMarkers.add(marqueur_depart);
+                    pt_arrivee = new LatLng(lat_arrivee, lon_arrivee); // Position d'arrivee
+                    Marker marqueur_arrivee = mMap.addMarker(new MarkerOptions().position(pt_arrivee));
+                    mMarkers.add(marqueur_arrivee);
+                    // Creation d'une ligne entre les marqueurs
+                    PolylineOptions line = new PolylineOptions()
+                            .add(pt_depart)
+                            .add(pt_arrivee);
+                    mMap.addPolyline(line);
                     // Centrage de la camera sur les marqueurs
                     mMap.setPadding(0,0,0,0);
                     LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                    for (Marker marker : markers) {
+                    for (Marker marker : mMarkers) {
                         builder.include(marker.getPosition());
                     }
                     LatLngBounds bounds = builder.build();
@@ -942,5 +1013,68 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
     }
+
+    /**
+     * Clear map markers
+     */
+    private void removeMarkers() {
+        for (Marker marker: mMarkers) {
+            marker.remove();
+        }
+        mMarkers.clear();
+    }
+
+    /**
+     * Smooth location movement
+     * @param marker
+     * @param toPosition
+     * @param hideMarker
+     */
+    public void animateMarker(final Marker marker, final LatLng toPosition,
+                              final boolean hideMarker)
+    {
+        final Handler handler = new Handler();
+        final long start = SystemClock.uptimeMillis();
+        Projection proj = mMap.getProjection();
+        Point startPoint = proj.toScreenLocation(marker.getPosition());
+        final LatLng startLatLng = proj.fromScreenLocation(startPoint);
+        final long duration = 500;
+
+        final LinearInterpolator interpolator = new LinearInterpolator();
+
+        handler.post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                long elapsed = SystemClock.uptimeMillis() - start;
+                float t = interpolator.getInterpolation((float) elapsed
+                        / duration);
+                double lng = t * toPosition.longitude + (1 - t)
+                        * startLatLng.longitude;
+                double lat = t * toPosition.latitude + (1 - t)
+                        * startLatLng.latitude;
+                marker.setPosition(new LatLng(lat, lng));
+
+                if (t < 1.0)
+                {
+                    // Post again 16ms later.
+                    handler.postDelayed(this, 16);
+                }
+                else
+                {
+                    if (hideMarker)
+                    {
+                        marker.setVisible(false);
+                    }
+                    else
+                    {
+                        marker.setVisible(true);
+                    }
+                }
+            }
+        });
+    }
+
 
 }

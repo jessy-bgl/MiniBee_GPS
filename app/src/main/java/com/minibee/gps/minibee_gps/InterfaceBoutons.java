@@ -9,7 +9,7 @@ public class InterfaceBoutons extends AppCompatActivity implements View.OnClickL
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_buttons_interface);
+        setContentView(R.layout.activity_interface_boutons);
     }
 
     @Override
