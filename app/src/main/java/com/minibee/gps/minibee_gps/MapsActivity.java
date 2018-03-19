@@ -1,24 +1,17 @@
 package com.minibee.gps.minibee_gps;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Color;
-import android.graphics.Interpolator;
-import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
-import android.os.Handler;
 import android.os.Looper;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.os.Bundle;
@@ -30,7 +23,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -56,7 +48,6 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -84,6 +75,21 @@ import javax.xml.transform.TransformerException;
 import org.xml.sax.SAXException;
 
 import static java.lang.Math.abs;
+
+
+import android.animation.ObjectAnimator;
+import android.animation.TypeEvaluator;
+import android.animation.ValueAnimator;
+import android.annotation.TargetApi;
+import android.os.Build;
+import android.os.Handler;
+import android.os.SystemClock;
+import android.util.Property;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Interpolator;
+
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
@@ -139,7 +145,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Boolean for automatic/manual camera movement
     private Boolean autoCameraMove;
 
-    // Boolean : disable automatic camera movement after search
+    // Boolean for search detection : used to disable automatic camera movement after search
     private Boolean search;
 
     // The desired interval for location updates. Inexact. Updates may be more or less frequent.
@@ -161,6 +167,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // Barre d'altitude
     private ImageView barre_altitude;
+
     // Echelle d'altitude
     private ImageView echelle_altitude;
     private float hauteur_echelle_altitude;
@@ -190,6 +197,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // Marqueurs sur la map
     List<Marker> mMarkers;
+    Marker marker;
 
 
     /**
@@ -227,6 +235,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // MyLocationButton
         my_location_btn = (ImageView) findViewById(R.id.my_location_btn);
+
+        // Mise a jour de la barre d'altitude
+        hauteur_echelle_altitude = echelle_altitude.getHeight();
+        initial_altitude_bar_position_y = barre_altitude.getY();
 
         // Marqueurs
         mMarkers = new ArrayList<Marker>();
@@ -408,9 +420,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        // Mise a jour de la barre d'altitude
-        hauteur_echelle_altitude = echelle_altitude.getHeight();
-        initial_altitude_bar_position_y = barre_altitude.getY();
         updateAltitudeUI();
 
         // Customise the styling of the base map using a JSON object defined in a raw resource file
@@ -461,6 +470,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 super.onLocationResult(locationResult);
 
                 // Recuperation de notre position
+                if (mLastLocation == null)
+                {
+                    Location first_pos = locationResult.getLastLocation();
+                    //marker = mMap.addMarker(new MarkerOptions().position(new LatLng(first_pos.getLatitude(), first_pos.getLongitude())));
+                    marker = null;
+                }
                 mLastLocation = locationResult.getLastLocation();
                 LatLng myPos = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
 
@@ -470,14 +485,32 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 {
                     autoCameraMove = true;
                     // Deplacement de la camera
-                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition(myPos, zoom, 90.0f, 0.0f)), 1000, null);
-                    /*CameraPosition cameraPosition = new CameraPosition.Builder()
-                            .target(myPos)             // Sets the center of the map to current location
-                            .zoom(zoom)                   // Sets the zoom
-                            .bearing(myCompassView.getDirection()) // Sets the orientation of the camera
-                            .tilt(90.0f)                   // Sets the tilt of the camera to 90 degrees
-                            .build();                   // Creates a CameraPosition from the builder
-                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));*/
+                    LatLngInterpolator lli = new LatLngInterpolator.Linear();
+
+                    if (marker != null) {
+                        animateMarkerToICS(marker, myPos, lli);
+                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition(
+                                marker.getPosition(), zoom, 90.0f, 0.0f)), 1000, null);
+                        /*CameraPosition cameraPosition = new CameraPosition.Builder()
+                                .target(marker.getPosition())             // Sets the center of the map to current location
+                                .zoom(zoom)                   // Sets the zoom
+                                .bearing(myCompassView.getDirection()) // Sets the orientation of the camera
+                                .tilt(90.0f)                   // Sets the tilt of the camera to 90 degrees
+                                .build();                   // Creates a CameraPosition from the builder
+                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));*/
+                    }
+                    else {
+                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition(
+                                myPos, zoom, 90.0f, 0.0f)), 1000, null);
+                        /*CameraPosition cameraPosition = new CameraPosition.Builder()
+                                .target(myPos)             // Sets the center of the map to current location
+                                .zoom(zoom)                   // Sets the zoom
+                                .bearing(myCompassView.getDirection()) // Sets the orientation of the camera
+                                .tilt(90.0f)                   // Sets the tilt of the camera to 90 degrees
+                                .build();                   // Creates a CameraPosition from the builder
+                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));*/
+                    }
+
                     autoCameraMove = false;
                 }
 
@@ -526,8 +559,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 break;
             // Recuperation des coordonnees de depart & arrivee
             case DESTINATION_REQUEST:
+                search = true; // will disable the automatic camera movement
                 if (resultCode == RESULT_OK) {
-                    search = true; // will disable the automatic camera movement
                     // Recuperation des coordonnees GPS de depart et d'arrivee
                     double lat_depart = data.getDoubleExtra("lat_depart", 0);
                     double lon_depart = data.getDoubleExtra("lon_depart", 0);
@@ -884,7 +917,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return true;
     }
 
-    // Fonction d'ajustement de la position et de la couleur de la barre d'altitude
+    /**
+     * Fonction d'ajustement de la position et de la couleur de la barre d'altitude
+     */
     public void updateAltitudeUI() {
         text_altitude.setText(altitude + " m");
         // Position
@@ -898,7 +933,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         else barre_altitude.setBackgroundColor(Color.GREEN);
     }
 
-    // Fonction d'ecriture de notre position dans un XML
+    /**
+     * Fonction d'ecriture de notre position dans un XML
+     * @throws TransformerException
+     */
     public void positionInXML() throws TransformerException {
         Itineraire itineraire = new Itineraire(getApplicationContext(), getFilesDir().getAbsolutePath()+"/");
         // Ecriture de notre position dans un XML
@@ -914,7 +952,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //System.out.println(itineraire.getItineraire());
     }
 
-    // Fonction d'ecriture des positions de depart/arrivee dans un XML
+    /**
+     * Fonction d'ecriture des positions de depart/arrivee dans un XML
+     * @param lat_depart
+     * @param lon_depart
+     * @param lat_arrivee
+     * @param lon_arrivee
+     * @throws TransformerException
+     */
     public void positionsInXML(double lat_depart, double lon_depart, double lat_arrivee, double lon_arrivee) throws TransformerException {
         Itineraire itineraire = new Itineraire(getApplicationContext(), getFilesDir().getAbsolutePath()+"/");
         try {
@@ -935,7 +980,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    // Fonction de modification manuelle d'altitude
+    /**
+     * Fonction de modification manuelle d'altitude
+     */
     public void modifyAltitude() {
         Button add_altitude = (Button) findViewById(R.id.add_altitude);
         // Lorsque l'altitude augmente
@@ -986,57 +1033,68 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMarkers.clear();
     }
 
-    /**
-     * Smooth location movement
-     * @param marker
-     * @param toPosition
-     * @param hideMarker
-     */
-    public void animateMarker(final Marker marker, final LatLng toPosition,
-                              final boolean hideMarker)
-    {
+    static void animateMarkerToGB(final Marker marker, final LatLng finalPosition, final LatLngInterpolator latLngInterpolator) {
+        final LatLng startPosition = marker.getPosition();
         final Handler handler = new Handler();
         final long start = SystemClock.uptimeMillis();
-        Projection proj = mMap.getProjection();
-        Point startPoint = proj.toScreenLocation(marker.getPosition());
-        final LatLng startLatLng = proj.fromScreenLocation(startPoint);
-        final long duration = 500;
+        final Interpolator interpolator = new AccelerateDecelerateInterpolator();
+        final float durationInMs = 3000;
 
-        final LinearInterpolator interpolator = new LinearInterpolator();
+        handler.post(new Runnable() {
+            long elapsed;
+            float t;
+            float v;
 
-        handler.post(new Runnable()
-        {
             @Override
-            public void run()
-            {
-                long elapsed = SystemClock.uptimeMillis() - start;
-                float t = interpolator.getInterpolation((float) elapsed
-                        / duration);
-                double lng = t * toPosition.longitude + (1 - t)
-                        * startLatLng.longitude;
-                double lat = t * toPosition.latitude + (1 - t)
-                        * startLatLng.latitude;
-                marker.setPosition(new LatLng(lat, lng));
+            public void run() {
+                // Calculate progress using interpolator
+                elapsed = SystemClock.uptimeMillis() - start;
+                t = elapsed / durationInMs;
+                v = interpolator.getInterpolation(t);
 
-                if (t < 1.0)
-                {
+                marker.setPosition(latLngInterpolator.interpolate(v, startPosition, finalPosition));
+
+                // Repeat till progress is complete.
+                if (t < 1) {
                     // Post again 16ms later.
                     handler.postDelayed(this, 16);
-                }
-                else
-                {
-                    if (hideMarker)
-                    {
-                        marker.setVisible(false);
-                    }
-                    else
-                    {
-                        marker.setVisible(true);
-                    }
                 }
             }
         });
     }
 
+
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    void animateMarkerToHC(final Marker marker, final LatLng finalPosition, final LatLngInterpolator latLngInterpolator) {
+        final LatLng startPosition = marker.getPosition();
+
+        ValueAnimator valueAnimator = new ValueAnimator();
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float v = animation.getAnimatedFraction();
+                LatLng newPosition = latLngInterpolator.interpolate(v, startPosition, finalPosition);
+                marker.setPosition(newPosition);
+            }
+        });
+        valueAnimator.setFloatValues(0, 1); // Ignored.
+        valueAnimator.setDuration(3000);
+        valueAnimator.start();
+    }
+
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    void animateMarkerToICS(Marker marker, LatLng finalPosition, final LatLngInterpolator latLngInterpolator) {
+        TypeEvaluator<LatLng> typeEvaluator = new TypeEvaluator<LatLng>() {
+            @Override
+            public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
+                return latLngInterpolator.interpolate(fraction, startValue, endValue);
+            }
+        };
+        Property<Marker, LatLng> property = Property.of(Marker.class, LatLng.class, "position");
+        ObjectAnimator animator = ObjectAnimator.ofObject(marker, property, typeEvaluator, finalPosition);
+        animator.setDuration(3000);
+        animator.start();
+    }
 
 }
