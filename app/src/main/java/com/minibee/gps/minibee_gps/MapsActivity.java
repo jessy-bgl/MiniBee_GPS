@@ -695,7 +695,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onResume();
         // Within {@code onPause()}, we remove location updates. Here, we resume receiving
         // location updates if the user has requested them.
-        mRequestingLocationUpdates = true;
         if (mRequestingLocationUpdates && mLocationPermissionGranted) {
             startLocationUpdates();
         } else if (!mLocationPermissionGranted) {

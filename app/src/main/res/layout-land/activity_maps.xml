@@ -136,8 +136,7 @@
         android:layout_gravity="start"
         android:layout_marginBottom="75dp"
         android:fitsSystemWindows="true"
-        app:headerLayout="@layout/nav_header_main"
-        app:menu="@menu/activity_main_drawer"
-        map:headerLayout="@layout/entete_menu" />
+        app:headerLayout="@menu/entete_menu"
+        app:menu="@menu/elements_menu"/>
 
 </android.support.v4.widget.DrawerLayout>
