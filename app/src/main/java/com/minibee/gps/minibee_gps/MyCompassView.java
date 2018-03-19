@@ -73,12 +73,8 @@ public class MyCompassView extends View {
 
 
             Matrix matrix = new Matrix();
-            //matrix.postRotate(direction);
-            //matrix.postScale(scaleWidth, scaleHeight);
             matrix.setRotate(direction,icon.getWidth()/2,icon.getHeight()/2);
-            //matrix.postTranslate(icon.getWidth(), icon.getHeight());
             icon = Bitmap.createScaledBitmap(icon, this.getWidth(), this.getHeight(), true);
-            //icon = Bitmap.createBitmap(icon, 0, 0, icon.getWidth(), icon.getHeight(), matrix, true);
 
             canvas.drawBitmap(icon, matrix, paint);
             /*canvas.drawLine(cxCompass, cyCompass,

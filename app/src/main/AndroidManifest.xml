@@ -41,8 +41,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.minibee.gps.minibee_gps.ButtonsInterface"></activity>
-        <activity android:name="com.minibee.gps.minibee_gps.DepartArrivee"></activity>
+        <activity android:name="com.minibee.gps.minibee_gps.InterfaceBoutons"></activity>
+        <activity android:name="com.minibee.gps.minibee_gps.RechercheItineraire"></activity>
     </application>
 
 </manifest>

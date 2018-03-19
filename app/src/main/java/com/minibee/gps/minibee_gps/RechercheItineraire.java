@@ -30,12 +30,10 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.Filter;
 import android.widget.Filterable;
-import android.widget.TextView;
-import android.widget.Toast;
 
 //import com.javacodegeeks.androidgoogleplacesautocomplete.R;
 
-public class DepartArrivee extends Activity {
+public class RechercheItineraire extends Activity {
 
     private static final String LOG_TAG = "Google Places Autocomplete";
     private static final String PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place";
@@ -50,15 +48,15 @@ public class DepartArrivee extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.address );
+        setContentView(R.layout.activity_recherche_itineraire);
 
         // Autocompletion de Google sur les barres de recherche
         AutoCompleteTextView autoCompView = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView);
         autoCompView.setHint("Ma position");
-        autoCompView.setAdapter(new GooglePlacesAutocompleteAdapter(this, R.layout.list_item));
+        autoCompView.setAdapter(new GooglePlacesAutocompleteAdapter(this, R.layout.resultats_recherche_itineraire));
 
         AutoCompleteTextView autoCompView2 = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView2);
-        autoCompView2.setAdapter(new GooglePlacesAutocompleteAdapter(this, R.layout.list_item));
+        autoCompView2.setAdapter(new GooglePlacesAutocompleteAdapter(this, R.layout.resultats_recherche_itineraire));
 
         // Creation des listeners specifiques aux barres de recherche pour recuperer les coordonnees GPS
         OnItemClickListener ocl_depart = new OnItemClickListener() {

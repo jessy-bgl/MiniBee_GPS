@@ -3,13 +3,9 @@ package com.minibee.gps.minibee_gps;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -30,7 +26,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.support.design.widget.BottomNavigationView;
@@ -53,7 +48,6 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -253,7 +247,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         buttons.setOnClickListener(new View.OnClickListener()   {
             public void onClick(View v)  {
                 try {
-                    Intent i = new Intent(MapsActivity.this, ButtonsInterface.class);
+                    Intent i = new Intent(MapsActivity.this, InterfaceBoutons.class);
                     startActivity(i);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -841,7 +835,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         switch (item.getItemId()) {
             case R.id.nav_search:
                 try {
-                    Intent i = new Intent(MapsActivity.this, DepartArrivee.class);
+                    Intent i = new Intent(MapsActivity.this, RechercheItineraire.class);
                     startActivityForResult(i, DESTINATION_REQUEST);
                 } catch (Exception e) {
                     e.printStackTrace();
