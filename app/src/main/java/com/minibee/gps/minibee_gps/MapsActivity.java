@@ -236,9 +236,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // MyLocationButton
         my_location_btn = (ImageView) findViewById(R.id.my_location_btn);
 
-        // Mise a jour de la barre d'altitude
-        hauteur_echelle_altitude = echelle_altitude.getHeight();
-        initial_altitude_bar_position_y = barre_altitude.getY();
+        // Barre & echelle d'altitude
+        barre_altitude = (ImageView) findViewById(R.id.barre_altitude);
+        echelle_altitude = (ImageView) findViewById(R.id.echelle_altitude);
 
         // Marqueurs
         mMarkers = new ArrayList<Marker>();
@@ -313,11 +313,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 my_location_btn.setVisibility(View.GONE);
             }
         });
-
-        // Barre & echelle d'altitude
-        barre_altitude = (ImageView) findViewById(R.id.barre_altitude);
-        echelle_altitude = (ImageView) findViewById(R.id.echelle_altitude);
-
 
         // Boussole
         myCompassView = (MyCompassView)findViewById(R.id.my_compass_view);
@@ -420,6 +415,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        // Mise a jour de la barre d'altitude
+        hauteur_echelle_altitude = echelle_altitude.getHeight();
+        initial_altitude_bar_position_y = barre_altitude.getY();
         updateAltitudeUI();
 
         // Customise the styling of the base map using a JSON object defined in a raw resource file
