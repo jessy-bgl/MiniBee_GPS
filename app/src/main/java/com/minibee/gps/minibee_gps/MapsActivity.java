@@ -321,10 +321,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if(mySensors.size() > 0){
             mySensorManager.registerListener(mySensorEventListener, mySensors.get(0), SensorManager.SENSOR_DELAY_NORMAL);
             sersorrunning = true;
-            //Toast.makeText(this, "Start ORIENTATION Sensor", Toast.LENGTH_LONG).show();
         }
         else{
-            //Toast.makeText(this, "No ORIENTATION Sensor", Toast.LENGTH_LONG).show();
             sersorrunning = false;
             finish();
         }
@@ -343,7 +341,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    // Pour la boussole
+    /**
+     * Gestion du senseur pour la boussole
+     */
     private SensorEventListener mySensorEventListener = new SensorEventListener() {
         @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -496,6 +496,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     else {
                         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition(
                                 myPos, zoom, 90.0f, 0.0f)), 1000, null);
+                        // Le code suivant ajoute la fonction de rotation de camera en fonction de la rotation du telephone
                         /*CameraPosition cameraPosition = new CameraPosition.Builder()
                                 .target(myPos)             // Sets the center of the map to current location
                                 .zoom(zoom)                   // Sets the zoom
