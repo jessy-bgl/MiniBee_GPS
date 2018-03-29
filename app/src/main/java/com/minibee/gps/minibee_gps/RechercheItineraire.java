@@ -33,6 +33,9 @@ import android.widget.Filterable;
 
 //import com.javacodegeeks.androidgoogleplacesautocomplete.R;
 
+/**
+ * Classe Recherche Itineraire (ecran specifique avec 2 champs texte pour les adresses)
+ */
 public class RechercheItineraire extends Activity {
 
     private static final String LOG_TAG = "Google Places Autocomplete";
@@ -45,6 +48,10 @@ public class RechercheItineraire extends Activity {
     double lat_depart = 0,lon_depart =0;
     double lat_arrivee = 0,lon_arrivee =0;
 
+    /**
+     * Initialisation de la page de recherche d'itineraire
+     * @param savedInstanceState
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,6 +129,11 @@ public class RechercheItineraire extends Activity {
 
     }
 
+    /**
+     * Fonction de requetage d'autocompletion d'adresse
+     * @param input
+     * @return
+     */
     @SuppressLint("LongLogTag")
     public static ArrayList autocomplete(String input) {
         ArrayList resultList = null;
@@ -175,6 +187,9 @@ public class RechercheItineraire extends Activity {
         return resultList;
     }
 
+    /**
+     * Classe GooglePlacesAutocompleteAdapter pour autocompletion, fournie par Google
+     */
     class GooglePlacesAutocompleteAdapter extends ArrayAdapter implements Filterable {
         private ArrayList resultList;
 

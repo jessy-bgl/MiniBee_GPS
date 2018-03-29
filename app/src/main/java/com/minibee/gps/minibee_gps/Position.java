@@ -1,8 +1,7 @@
 package com.minibee.gps.minibee_gps;
 
 /**
- *
- * @author Beydi Sanogo
+ * Classe Position : objet avec 3 float (latitude, longitude, altitude)
  */
 public class Position {
     private float latitude;

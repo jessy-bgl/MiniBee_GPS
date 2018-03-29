@@ -28,7 +28,9 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Attr;
 import org.xml.sax.SAXException;
 
-
+/**
+ * Classe Itineraire : fonctions de creation de fichier XML + lecture/ecriture de positions dans un XML
+ */
 public class Itineraire {
 
     int nombreDePas = 0;
@@ -102,7 +104,17 @@ public class Itineraire {
 
     }
 
-
+    /**
+     * Ajouter une position dans un fichier xml
+     * @param _latitude
+     * @param _longitude
+     * @param _altitude
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     * @throws TransformerConfigurationException
+     * @throws TransformerException
+     */
     public void addPosition(float _latitude, float _longitude, float _altitude ) throws ParserConfigurationException, SAXException, IOException, TransformerConfigurationException, TransformerException{
 
         DocumentBuilder docBuilder = factory.newDocumentBuilder();
@@ -138,6 +150,10 @@ public class Itineraire {
         transformer.transform(source, result);
     }
 
+    /**
+     * Afficher une liste de positions dans un fichier XML
+     * @param positions
+     */
     public  void addItineraire(List<Position> positions) {
 
         try {
@@ -220,6 +236,10 @@ public class Itineraire {
     }
 
 
+    /**
+     * Recuperer une liste de positions depuis un fichier XML
+     * @return
+     */
     public List<Position> getItineraire(){
         List<Position> positions = new ArrayList<Position>();
         float _latitude, _longitude, _altitude;

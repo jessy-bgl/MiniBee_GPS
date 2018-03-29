@@ -4,6 +4,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
+/**
+ * Classe correspondant a l'ecran d'actions (boutons)
+ */
 public class InterfaceBoutons extends AppCompatActivity implements View.OnClickListener {
 
     @Override

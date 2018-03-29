@@ -12,6 +12,9 @@ import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.view.View;
 
+/**
+ * Classe Boussole
+ */
 public class MyCompassView extends View {
 
     public float getDirection() {
@@ -37,13 +40,15 @@ public class MyCompassView extends View {
         init();
     }
 
+    /**
+     * Initialisation des parametres de la zone de la boussole
+     */
     private void init(){
 
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(3);
         paint.setColor(Color.BLACK);
         paint.setTextSize(25);
-
         firstDraw = true;
     }
 
@@ -52,6 +57,10 @@ public class MyCompassView extends View {
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
     }
 
+    /**
+     * Affichage de la boussole
+     * @param canvas
+     */
     @Override
     protected void onDraw(Canvas canvas) {
 
@@ -91,6 +100,10 @@ public class MyCompassView extends View {
 
     }
 
+    /**
+     * Mise a jour de la direction de la boussole
+     * @param dir
+     */
     public void updateDirection(float dir)
     {
         firstDraw = false;

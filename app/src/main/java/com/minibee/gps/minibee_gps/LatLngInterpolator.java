@@ -12,6 +12,9 @@ import static java.lang.Math.sqrt;
 import static java.lang.Math.toDegrees;
 import static java.lang.Math.toRadians;
 
+/**
+ * Interface utile pour l'animation de marqueur par interpolation (classe MarkerAnimation)
+ */
 public interface LatLngInterpolator {
     public LatLng interpolate(float fraction, LatLng a, LatLng b);
 

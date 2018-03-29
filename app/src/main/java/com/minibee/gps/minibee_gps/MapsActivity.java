@@ -91,7 +91,11 @@ import android.view.animation.Interpolator;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
+// ============================================================================================== //
 
+/**
+ * Classe principale : ecran principal
+ */
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
         GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks,
         NavigationView.OnNavigationItemSelectedListener, BottomNavigationView.OnNavigationItemSelectedListener,
@@ -201,8 +205,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     /**
-     * Lors de la création de l'activité (la classe)
-     * Initialisation des parametres : view
+     * Lors de la création de l'activité (la classe principale)
+     * Initialisation des parametres, etc.
      * @param savedInstanceState
      */
     @Override
@@ -535,6 +539,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mLocationSettingsRequest = builder.build();
     }
 
+    /**
+     * Recuperation et traitement de resultats suite a une requete
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
@@ -747,6 +757,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    /**
+     * Lorsque l'application redemarre apres une mise en pause
+     */
     @Override
     public void onResume() {
         super.onResume();
@@ -763,6 +776,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    /**
+     * Lorsque l'application est mise en pause
+     */
     @Override
     protected void onPause() {
         super.onPause();

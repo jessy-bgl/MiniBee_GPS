@@ -15,9 +15,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
 /**
- * Created by jessy on 19/03/18.
+ * Classe avec fonctions de mouvements plus fluide des marqueurs par interpolation
  */
-
 public class MarkerAnimation {
     static void animateMarkerToGB(final Marker marker, final LatLng finalPosition, final LatLngInterpolator latLngInterpolator) {
         final LatLng startPosition = marker.getPosition();
